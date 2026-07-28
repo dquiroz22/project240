@@ -122,7 +122,9 @@
   <button class="tab-btn active" data-tab="overview">Overview</button>
   <button class="tab-btn" data-tab="goal">Project 240 Goal</button>
   <button class="tab-btn" data-tab="nutrition">Nutrition</button>
+  <button class="tab-btn" data-tab="mealplan">Meal Plan</button>
   <button class="tab-btn" data-tab="training">Training</button>
+  <button class="tab-btn" data-tab="workoutprogram">Workout Program</button>
   <button class="tab-btn" data-tab="vitals">Vitals &amp; Glucose</button>
   <button class="tab-btn" data-tab="history">Full History</button>
   <button class="tab-btn" data-tab="log">Check-In Log</button>
@@ -225,6 +227,63 @@
     </div>
   </div>
 
+  <!-- MEAL PLAN -->
+  <div class="tabpanel" id="tab-mealplan">
+    <div class="alert">General educational guidance, not medical advice — worth a quick check-in with your doctor before starting keto given your goals and history, especially around blood glucose and any medications.</div>
+
+    <div class="section-title">Keto Macro Targets</div>
+    <div class="grid cols-4">
+      <div class="card"><h3>Calories</h3><div class="big">~2,650 <small>kcal/day</small></div><div class="delta muted">Recalculates as weight drops — check the Nutrition tab targets periodically.</div></div>
+      <div class="card"><h3>Protein</h3><div class="big">~240 <small>g/day</small></div><div class="delta muted">~36% of calories. Priority #1 — protects muscle during the deficit.</div></div>
+      <div class="card"><h3>Net Carbs</h3><div class="big">&lt;30 <small>g/day</small></div><div class="delta muted">Net = total carbs − fiber. This is the hard ceiling.</div></div>
+      <div class="card"><h3>Fat</h3><div class="big">~150 <small>g/day</small></div><div class="delta muted">Fills the rest of your calories — adjust up/down to hit the calorie target.</div></div>
+    </div>
+
+    <div class="section-title">Ground Rules</div>
+    <div class="card">
+      <p style="margin-top:0;"><b>Eat freely:</b> beef, pork, chicken (esp. thighs — cheaper, more fat, harder to overcook), eggs, bacon, full-fat cheese, butter, olive oil, avocado oil, heavy cream. Protein and fat are both on your side here.</p>
+      <p><b>Avoid:</b> bread, rice, pasta, potatoes, sugar, most fruit, beer. These blow the carb ceiling fast and you won't get much volume of food for the carbs spent.</p>
+      <p><b>Vegetables:</b> you don't like them and this plan doesn't lean on them. If you want fiber for regularity, a spoon of chia or psyllium husk in water does the job without needing to eat a salad.</p>
+      <p><b>Electrolytes:</b> the first 1–2 weeks off carbs, you'll lose water weight fast and can feel flat or crampy ("keto flu") from sodium/potassium/magnesium loss. Salt your food more than feels normal, and consider a sugar-free electrolyte mix (LMNT or similar) daily.</p>
+      <p style="margin-bottom:0;"><b>Alcohol:</b> track it in your check-ins. Most beer is carb-heavy; straight liquor (whiskey, tequila, vodka) is effectively zero-carb but still counts against fat loss and messes with sleep/recovery.</p>
+    </div>
+
+    <div class="section-title">Weekly Meal Prep — Sunday, ~90 Minutes</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Step</th><th>What</th><th>Time</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Oven to 375°F. Bake a tray of 8–10 chicken thighs (skin on, salted heavy) — covers dinners.</td><td>~40 min (mostly hands-off)</td></tr>
+          <tr><td>2</td><td>While that's in, brown 3–4 lb ground beef in batches, season heavy (salt, pepper, garlic powder, cumin/chili if you want taco-style). Covers lunches.</td><td>~25 min</td></tr>
+          <tr><td>3</td><td>Bake a dozen eggs muffin-tin style with cooked bacon/sausage crumbles and shredded cheese, 350°F. Covers breakfasts.</td><td>~25 min (overlap with step 1)</td></tr>
+          <tr><td>4</td><td>Hard boil a dozen eggs for grab-and-go snacks.</td><td>~15 min</td></tr>
+          <tr><td>5</td><td>Portion everything into containers: 2 egg muffins + breakfast, beef + cheese for lunch, chicken thigh + butter for dinner.</td><td>~10 min</td></tr>
+        </tbody>
+      </table>
+      <div class="footnote">Rotate the protein weekly if you want variety (swap ground beef for pork shoulder, chicken thighs for steak tips) — the structure stays the same, just the protein source changes.</div>
+    </div>
+
+    <div class="section-title">Default Daily Structure</div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Meals</h3>
+        <table>
+          <thead><tr><th>Meal</th><th>What</th></tr></thead>
+          <tbody>
+            <tr><td>Breakfast</td><td>2 egg muffins (bacon/sausage + cheese)</td></tr>
+            <tr><td>Lunch</td><td>Ground beef + shredded cheese, sour cream on the side</td></tr>
+            <tr><td>Dinner</td><td>Chicken thigh (or rotated protein) + butter</td></tr>
+            <tr><td>Snacks</td><td>String cheese, hard-boiled eggs, beef jerky, macadamia nuts or pecans (lower-carb than cashews/peanuts)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Why This Works For You Specifically</h3>
+        <p style="margin-top:0;">Zero reliance on vegetables — every meal is meat, egg, cheese, and fat. Everything here batch-cooks in one Sunday session and reheats without going bad by Thursday. High protein target protects muscle while the calorie deficit does the work on the scale, and low carb should keep your already-strong glucose numbers (87.6% time-in-range) exactly where they are or better.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- TRAINING -->
   <div class="tabpanel" id="tab-training">
     <div class="grid cols-4">
@@ -251,6 +310,95 @@
         <thead><tr><th>Date</th><th>Type</th><th>Duration</th><th>Energy</th><th>Distance</th><th>Source</th></tr></thead>
         <tbody></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- WORKOUT PROGRAM -->
+  <div class="tabpanel" id="tab-workoutprogram">
+    <div class="alert">Built around your left knee — every movement below either avoids deep knee flexion or has a knee-safe substitution called out. Stop and reassess (don't push through) if anything loads the knee wrong. Worth clearing with a doctor/PT before you start, given your size and the existing knee issue.</div>
+
+    <div class="section-title">Equipment &amp; Weekly Structure</div>
+    <div class="grid cols-4">
+      <div class="card"><h3>Bells You Own</h3><div class="big">35 / 55 / 70 <small>lb</small></div></div>
+      <div class="card"><h3>Training Slot</h3><div class="big">4–5 AM</div><div class="delta muted">Daily, per your schedule</div></div>
+      <div class="card"><h3>KB Strength Days</h3><div class="big">3x <small>/week</small></div><div class="delta muted">Mon / Wed / Fri</div></div>
+      <div class="card"><h3>Active Recovery</h3><div class="big">2–3x <small>/week</small></div><div class="delta muted">Walking, cycling, or pickleball (already in your Training tab)</div></div>
+    </div>
+    <div class="footnote">Tue/Thu: easy walk or bike, whatever's already logged in Training. Sat: pickleball if you're playing, otherwise optional light session. Sun: full rest.</div>
+
+    <div class="section-title">Knee-Safe Movement Substitutions</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Instead of...</th><th>Do this</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Lunges / split squats</td><td>Single-leg RDL (Romanian deadlift)</td><td>Hip-hinge dominant, minimal knee flexion, still trains the same posterior chain.</td></tr>
+          <tr><td>Deep goblet squat</td><td>Box/bench squat — sit to a box at or above knee height, don't chase depth</td><td>Caps how far the knee has to bend; still loads the legs hard.</td></tr>
+          <tr><td>Jump/plyo work, box jumps</td><td>Swings and carries for conditioning instead</td><td>Zero impact loading on the joint.</td></tr>
+          <tr><td>Full Turkish Get-Up</td><td>Half Get-Up (to elbow, skip the low lunge step)</td><td>Cuts the one position in the TGU that puts the knee in a deep, loaded bend.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">The Program — 12 Weeks, 3 Phases</div>
+    <div class="grid cols-3">
+      <div class="card">
+        <h3>Phase 1 — Weeks 1–4</h3>
+        <p style="margin-top:0; font-weight:600;">Technique &amp; Base</p>
+        <p class="footnote" style="margin:0;">Lighter bells, higher reps, groove the patterns before loading up. Mostly 35/55 lb.</p>
+      </div>
+      <div class="card">
+        <h3>Phase 2 — Weeks 5–8</h3>
+        <p style="margin-top:0; font-weight:600;">Strength Build</p>
+        <p class="footnote" style="margin:0;">Same movements, heavier bells (55/70 lb), lower reps on the main lifts.</p>
+      </div>
+      <div class="card">
+        <h3>Phase 3 — Weeks 9–12</h3>
+        <p style="margin-top:0; font-weight:600;">Conditioning</p>
+        <p class="footnote" style="margin:0;">Add swing/carry complexes and shorter rest periods. Full use of the 70 lb bell.</p>
+      </div>
+    </div>
+
+    <div class="section-title">Day A — Hinge &amp; Press</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Exercise</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead>
+        <tbody>
+          <tr><td>KB Deadlift</td><td>4x8 @ 55</td><td>4x6 @ 70</td><td>5x5 @ 70</td></tr>
+          <tr><td>Single-Arm Overhead Press</td><td>3x8/side @ 35</td><td>3x6/side @ 35</td><td>4x5/side @ 35</td></tr>
+          <tr><td>Box Squat (moderate depth)</td><td>3x10 @ 35</td><td>3x8 @ 55</td><td>3x8 @ 55</td></tr>
+          <tr><td>Farmer/Suitcase Carry</td><td>3x40yd @ 55</td><td>3x40yd @ 70</td><td>4x50yd @ 70</td></tr>
+          <tr><td>Plank</td><td>3x30s</td><td>3x45s</td><td>3x60s</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">Day B — Swing &amp; Pull</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Exercise</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead>
+        <tbody>
+          <tr><td>Two-Hand Swing</td><td>5x15 @ 55</td><td>5x15 @ 70</td><td>8x10 @ 70 (:30 rest)</td></tr>
+          <tr><td>Single-Arm Row</td><td>3x10/side @ 55</td><td>3x8/side @ 70</td><td>4x8/side @ 70</td></tr>
+          <tr><td>Single-Leg RDL</td><td>3x8/side @ 35</td><td>3x8/side @ 55</td><td>3x10/side @ 55</td></tr>
+          <tr><td>Suitcase Carry</td><td>3x40yd/side @ 55</td><td>3x40yd/side @ 70</td><td>4x50yd/side @ 70</td></tr>
+          <tr><td>Halo (mobility)</td><td>2x10/side @ 35</td><td>2x10/side @ 35</td><td>2x10/side @ 35</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">Day C — Full Body</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Exercise</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead>
+        <tbody>
+          <tr><td>Single-Arm Clean &amp; Press</td><td>4x6/side @ 35</td><td>4x5/side @ 55</td><td>5x5/side @ 55</td></tr>
+          <tr><td>Rack Carry</td><td>3x40yd @ 55</td><td>3x40yd @ 70</td><td>4x50yd @ 70</td></tr>
+          <tr><td>KB Deadlift</td><td>3x10 @ 55</td><td>4x8 @ 70</td><td>4x6 @ 70</td></tr>
+          <tr><td>Half Get-Up (to elbow)</td><td>3x5/side @ 35</td><td>3x5/side @ 35</td><td>3x5/side @ 55</td></tr>
+          <tr><td>Swing-Carry-Press complex</td><td>—</td><td>—</td><td>3 rounds: 10 swings, 20yd carry, 5 press/side</td></tr>
+        </tbody>
+      </table>
+      <div class="footnote">Warm up every session with 5 min easy movement (walk, bike, or bodyweight circles) before picking up a bell — especially given the knee.</div>
     </div>
   </div>
 
