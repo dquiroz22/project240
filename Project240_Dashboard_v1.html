@@ -2122,6 +2122,23 @@ Chart.defaults.color = '#8b95ab';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
 Chart.defaults.font.family = "-apple-system, 'Segoe UI', sans-serif";
 
+function safeChart(el, config) {
+  // Wraps `new Chart(...)` so one bad chart (or Chart.js itself failing to load) can't
+  // throw and kill every render*() call queued after it in the init sequence below.
+  try {
+    return new Chart(el, config);
+  } catch (e) {
+    console.error('Chart render failed for', el && el.id, e);
+    if (el && el.parentElement) {
+      const msg = document.createElement('div');
+      msg.className = 'footnote';
+      msg.textContent = 'Chart failed to render (' + (e && e.message ? e.message : 'unknown error') + ').';
+      el.parentElement.appendChild(msg);
+    }
+    return null;
+  }
+}
+
 function baseLineOptions(extra) {
   return Object.assign({
     responsive: true, maintainAspectRatio: false,
@@ -2185,23 +2202,23 @@ function renderOverview() {
 
   // weight chart (last ~2 years for overview)
   const weightPts = weight.measured_events.concat(weight.estimated_events).sort((a,b)=>a.date.localeCompare(b.date));
-  new Chart(document.getElementById('chartOverviewWeight'), {
+  safeChart(document.getElementById('chartOverviewWeight'), {
     type: 'line',
-    data: { datasets: [{
+    data: { labels: weightPts.map(p => p.date), datasets: [{
       label: 'Weight (lb)',
-      data: weightPts.map(p => ({x:p.date, y:p.value})),
+      data: weightPts.map(p => p.value),
       borderColor: c.accent, backgroundColor: 'transparent', tension: 0.15,
       pointRadius: weightPts.map(p => p.type === 'measured' ? 3 : 2),
       pointBackgroundColor: weightPts.map(p => p.type === 'measured' ? c.accent : 'transparent'),
       pointBorderColor: c.accent,
       spanGaps: true,
     }]},
-    options: baseLineOptions({ scales: { x: { type: 'time', time: { unit: 'year' }, grid:{display:false} }, y: { grid: { color: 'rgba(255,255,255,0.06)' } } } })
+    options: baseLineOptions({ scales: { x: { grid:{display:false}, ticks:{ maxTicksLimit: 10 } }, y: { grid: { color: 'rgba(255,255,255,0.06)' } } } })
   });
 
   // glucose last 30 days
   const g30days = sortedDates.filter(d => d >= daysAgoStr(30));
-  new Chart(document.getElementById('chartOverviewGlucose'), {
+  safeChart(document.getElementById('chartOverviewGlucose'), {
     type: 'line',
     data: { labels: g30days, datasets: [{
       label: 'Glucose avg (mg/dL)',
@@ -2234,12 +2251,12 @@ function renderGoal() {
   }
 
   const weightPts = w.measured_events.concat(w.estimated_events).sort((a,b)=>a.date.localeCompare(b.date));
-  new Chart(document.getElementById('chartGoalWeight'), {
+  safeChart(document.getElementById('chartGoalWeight'), {
     type: 'line',
-    data: { datasets: [
+    data: { labels: weightPts.map(p => p.date), datasets: [
       {
         label: 'Weight (lb)',
-        data: weightPts.map(p => ({x:p.date, y:p.value})),
+        data: weightPts.map(p => p.value),
         borderColor: c.accent, backgroundColor: 'transparent', tension: 0.15,
         pointRadius: weightPts.map(p => p.type === 'measured' ? 4 : 3),
         pointStyle: weightPts.map(p => p.type === 'measured' ? 'circle' : 'circle'),
@@ -2249,22 +2266,22 @@ function renderGoal() {
       },
       {
         label: 'Target (240 lb)',
-        data: weightPts.length ? [{x:weightPts[0].date,y:240},{x:weightPts[weightPts.length-1].date,y:240}] : [],
+        data: weightPts.map(() => 240),
         borderColor: c.good, borderDash: [6,4], pointRadius: 0,
       }
     ]},
-    options: baseLineOptions({ scales: { x: { type:'time', time:{unit:'year'}, grid:{display:false} }, y: { grid:{color:'rgba(255,255,255,0.06)'} } } })
+    options: baseLineOptions({ scales: { x: { grid:{display:false}, ticks:{ maxTicksLimit: 10 } }, y: { grid:{color:'rgba(255,255,255,0.06)'} } } })
   });
 
-  new Chart(document.getElementById('chartBodyFat'), {
+  safeChart(document.getElementById('chartBodyFat'), {
     type: 'line',
-    data: { datasets: [{ label:'Body Fat %', data: w.body_fat_events.map(p=>({x:p.date,y:p.value})), borderColor:c.warn, tension:0.2, spanGaps:true }] },
-    options: baseLineOptions({ scales:{ x:{type:'time', time:{unit:'month'}, grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.06)'}} } })
+    data: { labels: w.body_fat_events.map(p=>p.date), datasets: [{ label:'Body Fat %', data: w.body_fat_events.map(p=>p.value), borderColor:c.warn, tension:0.2, spanGaps:true }] },
+    options: baseLineOptions({ scales:{ x:{grid:{display:false}, ticks:{maxTicksLimit:8}}, y:{grid:{color:'rgba(255,255,255,0.06)'}} } })
   });
-  new Chart(document.getElementById('chartBMI'), {
+  safeChart(document.getElementById('chartBMI'), {
     type: 'line',
-    data: { datasets: [{ label:'BMI', data: w.bmi_events.map(p=>({x:p.date,y:p.value})), borderColor:c.purple, tension:0.2, spanGaps:true }] },
-    options: baseLineOptions({ scales:{ x:{type:'time', time:{unit:'month'}, grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.06)'}} } })
+    data: { labels: w.bmi_events.map(p=>p.date), datasets: [{ label:'BMI', data: w.bmi_events.map(p=>p.value), borderColor:c.purple, tension:0.2, spanGaps:true }] },
+    options: baseLineOptions({ scales:{ x:{grid:{display:false}, ticks:{maxTicksLimit:8}}, y:{grid:{color:'rgba(255,255,255,0.06)'}} } })
   });
 }
 
@@ -2295,7 +2312,7 @@ function renderNutritionChart() {
 
   const chartEl = document.getElementById('chartNutrition');
   if (window._nutritionChart) window._nutritionChart.destroy();
-  window._nutritionChart = new Chart(chartEl, {
+  window._nutritionChart = safeChart(chartEl, {
     type: 'bar',
     data: {
       labels: logs.map(l=>l.date),
@@ -2324,7 +2341,7 @@ function renderTraining() {
   document.getElementById('tr90Minutes').textContent = Math.round(ws.last_90_days.weekly_avg_minutes);
 
   const types = Object.entries(ws.by_type).slice(0,8);
-  new Chart(document.getElementById('chartWorkoutMix'), {
+  safeChart(document.getElementById('chartWorkoutMix'), {
     type: 'doughnut',
     data: {
       labels: types.map(([k])=>k),
@@ -2342,7 +2359,7 @@ function renderTraining() {
     const mins = WORKOUTS.filter(w => w.date >= s && w.date <= e).reduce((sum,w)=>sum+w.duration_min,0);
     weeks.push({label: s, minutes: Math.round(mins)});
   }
-  new Chart(document.getElementById('chartWorkoutVolume'), {
+  safeChart(document.getElementById('chartWorkoutVolume'), {
     type: 'bar',
     data: { labels: weeks.map(w=>w.label), datasets: [{ label:'Minutes', data: weeks.map(w=>w.minutes), backgroundColor:'rgba(79,141,253,0.6)' }] },
     options: baseLineOptions({ plugins:{legend:{display:false}} })
@@ -2369,26 +2386,26 @@ function renderVitals() {
   document.getElementById('vSpo2').textContent = fmt(m.spo2_avg_pct.d30.avg,1,'%');
 
   const g90days = sortedDates.filter(d => d >= daysAgoStr(90) && dailyByDate[d].glucose_avg !== null);
-  new Chart(document.getElementById('chartGlucoseTrend'), {
+  safeChart(document.getElementById('chartGlucoseTrend'), {
     type:'line',
     data:{ labels:g90days, datasets:[{ label:'Glucose avg', data:g90days.map(d=>dailyByDate[d].glucose_avg), borderColor:c.purple, backgroundColor:'rgba(167,139,250,0.1)', fill:true, tension:0.25 }]},
     options: baseLineOptions()
   });
 
-  new Chart(document.getElementById('chartGlucoseTIR'), {
+  safeChart(document.getElementById('chartGlucoseTIR'), {
     type:'doughnut',
     data:{ labels:['<70','70–140','141–180','>180'], datasets:[{ data:[tir.below_70_pct,tir.in_70_140_pct,tir.in_141_180_pct,tir.above_180_pct], backgroundColor:[c.bad,c.good,c.warn,'#ef4444'] }]},
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:11}}}} }
   });
 
   const rhrDays = sortedDates.filter(d => d >= daysAgoStr(180) && dailyByDate[d].resting_hr !== null);
-  new Chart(document.getElementById('chartRHR'), {
+  safeChart(document.getElementById('chartRHR'), {
     type:'line',
     data:{ labels:rhrDays, datasets:[{ label:'Resting HR', data:rhrDays.map(d=>dailyByDate[d].resting_hr), borderColor:c.accent, tension:0.2 }]},
     options: baseLineOptions()
   });
   const sleepDays = sortedDates.filter(d => d >= daysAgoStr(180) && dailyByDate[d].sleep_hours !== null);
-  new Chart(document.getElementById('chartSleep'), {
+  safeChart(document.getElementById('chartSleep'), {
     type:'bar',
     data:{ labels:sleepDays, datasets:[{ label:'Sleep hrs', data:sleepDays.map(d=>dailyByDate[d].sleep_hours), backgroundColor:'rgba(52,211,153,0.5)' }]},
     options: baseLineOptions({ plugins:{legend:{display:false}} })
@@ -2459,10 +2476,10 @@ function renderHistoryChart() {
   }
   const pts = aggregate(rows, field, bucket);
   if (historyChart) historyChart.destroy();
-  historyChart = new Chart(document.getElementById('chartHistory'), {
+  historyChart = safeChart(document.getElementById('chartHistory'), {
     type: 'line',
-    data: { datasets: [{ label: field, data: pts, borderColor: c.accent, backgroundColor:'rgba(79,141,253,0.08)', fill:true, tension:0.2, pointRadius: bucket==='day'?1:2, spanGaps:true }] },
-    options: baseLineOptions({ scales: { x: { type:'time', time:{ unit: bucket==='month'?'year':(bucket==='week'?'month':'week') }, grid:{display:false} }, y:{grid:{color:'rgba(255,255,255,0.06)'}} } , plugins:{legend:{display:false}}})
+    data: { labels: pts.map(p=>p.x), datasets: [{ label: field, data: pts.map(p=>p.y), borderColor: c.accent, backgroundColor:'rgba(79,141,253,0.08)', fill:true, tension:0.2, pointRadius: bucket==='day'?1:2, spanGaps:true }] },
+    options: baseLineOptions({ scales: { x: { grid:{display:false}, ticks:{ maxTicksLimit: 12 } }, y:{grid:{color:'rgba(255,255,255,0.06)'}} } , plugins:{legend:{display:false}}})
   });
 }
 
@@ -2495,15 +2512,19 @@ function renderLog() {
 }
 
 // ============ INIT ============
-renderOverview();
-renderGoal();
-renderNutritionTargets();
-renderTraining();
-renderVitals();
-renderHistoryPicker();
-renderHistoryChart();
-renderLog();
-renderNutritionChart();
+// Each section renders independently -- one tab's bug (or bad data) can't blank out the rest.
+function safeRun(name, fn) {
+  try { fn(); } catch (e) { console.error(name + ' failed:', e); }
+}
+safeRun('renderOverview', renderOverview);
+safeRun('renderGoal', renderGoal);
+safeRun('renderNutritionTargets', renderNutritionTargets);
+safeRun('renderTraining', renderTraining);
+safeRun('renderVitals', renderVitals);
+safeRun('renderHistoryPicker', renderHistoryPicker);
+safeRun('renderHistoryChart', renderHistoryChart);
+safeRun('renderLog', renderLog);
+safeRun('renderNutritionChart', renderNutritionChart);
 </script>
 </body>
 </html>
