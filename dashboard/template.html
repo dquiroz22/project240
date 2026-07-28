@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Project 240 — Health &amp; Wellness System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1420;
+    --panel: #171d2e;
+    --panel2: #1e2538;
+    --border: #2a3350;
+    --text: #e8ecf5;
+    --muted: #8b95ab;
+    --accent: #4f8dfd;
+    --good: #34d399;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --purple: #a78bfa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  header {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; background: var(--bg); z-index: 50;
+  }
+  header h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  header .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  nav.tabs {
+    display: flex; gap: 4px; padding: 0 28px; border-bottom: 1px solid var(--border);
+    overflow-x: auto; background: var(--bg); position: sticky; top: 65px; z-index: 49;
+  }
+  nav.tabs button {
+    background: none; border: none; color: var(--muted); padding: 12px 16px;
+    font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap;
+  }
+  nav.tabs button.active { color: var(--text); border-bottom: 2px solid var(--accent); font-weight: 600; }
+  main { padding: 24px 28px 60px; max-width: 1280px; margin: 0 auto; }
+  .tabpanel { display: none; }
+  .tabpanel.active { display: block; }
+  .grid { display: grid; gap: 16px; }
+  .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 900px) {
+    .grid.cols-2, .grid.cols-3, .grid.cols-4 { grid-template-columns: 1fr 1fr; }
+  }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px;
+  }
+  .card h3 { margin: 0 0 4px; font-size: 13px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .04em; }
+  .card .big { font-size: 28px; font-weight: 700; margin-top: 4px; }
+  .card .big small { font-size: 14px; color: var(--muted); font-weight: 400; }
+  .card .delta { font-size: 12px; margin-top: 6px; }
+  .section-title { font-size: 18px; font-weight: 600; margin: 28px 0 14px; }
+  .section-title:first-child { margin-top: 0; }
+  .alert {
+    background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.35);
+    color: var(--warn); padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px;
+  }
+  .alert.bad { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.35); color: var(--bad); }
+  .alert.good { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.35); color: var(--good); }
+  .chart-wrap { position: relative; height: 280px; }
+  .chart-wrap.short { height: 180px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+  .pill.good { background: rgba(52,211,153,0.15); color: var(--good); }
+  .pill.warn { background: rgba(251,191,36,0.15); color: var(--warn); }
+  .pill.bad { background: rgba(248,113,113,0.15); color: var(--bad); }
+  form.checkin { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  form.checkin label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+  form.checkin input, form.checkin select, form.checkin textarea {
+    width: 100%; padding: 8px 10px; background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 13px;
+  }
+  form.checkin .full { grid-column: 1 / -1; }
+  .btn {
+    background: var(--accent); color: white; border: none; padding: 10px 18px;
+    border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn.secondary { background: var(--panel2); color: var(--text); border: 1px solid var(--border); }
+  .btn-row { display: flex; gap: 10px; margin-top: 14px; }
+  .range-picker { display: flex; gap: 6px; margin-bottom: 12px; }
+  .range-picker button {
+    background: var(--panel2); border: 1px solid var(--border); color: var(--muted);
+    padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer;
+  }
+  .range-picker button.active { background: var(--accent); color: white; border-color: var(--accent); }
+  select.metric-picker {
+    background: var(--panel2); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px;
+  }
+  .muted { color: var(--muted); }
+  .flex-between { display: flex; justify-content: space-between; align-items: baseline; }
+  .footnote { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Project 240 — Health &amp; Wellness System</h1>
+    <div class="sub">v1 · Generated <span id="genDate"></span> · Data through <span id="dataThrough"></span></div>
+  </div>
+  <div class="sub" id="headerScore"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="overview">Overview</button>
+  <button class="tab-btn" data-tab="goal">Project 240 Goal</button>
+  <button class="tab-btn" data-tab="nutrition">Nutrition</button>
+  <button class="tab-btn" data-tab="training">Training</button>
+  <button class="tab-btn" data-tab="vitals">Vitals &amp; Glucose</button>
+  <button class="tab-btn" data-tab="history">Full History</button>
+  <button class="tab-btn" data-tab="log">Check-In Log</button>
+</nav>
+
+<main>
+
+  <!-- OVERVIEW -->
+  <div class="tabpanel active" id="tab-overview">
+    <div id="overviewAlerts"></div>
+    <div class="grid cols-4" id="overviewCards"></div>
+
+    <div class="section-title">This Week's Priorities</div>
+    <div class="card">
+      <ul id="priorityList" style="margin:0; padding-left:20px; line-height:1.9;"></ul>
+    </div>
+
+    <div class="section-title">30-Day Snapshot</div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Weight Trend (measured + estimated)</h3>
+        <div class="chart-wrap"><canvas id="chartOverviewWeight"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Glucose — Last 30 Days</h3>
+        <div class="chart-wrap"><canvas id="chartOverviewGlucose"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJECT 240 GOAL -->
+  <div class="tabpanel" id="tab-goal">
+    <div class="grid cols-4">
+      <div class="card">
+        <h3>Starting Point</h3>
+        <div class="big">300 <small>lb</small></div>
+        <div class="delta muted">Program baseline</div>
+      </div>
+      <div class="card">
+        <h3>Current (best estimate)</h3>
+        <div class="big" id="goalCurrent">–</div>
+        <div class="delta muted" id="goalCurrentSource"></div>
+      </div>
+      <div class="card">
+        <h3>Target</h3>
+        <div class="big">240 <small>lb</small></div>
+        <div class="delta muted">Project 240 goal</div>
+      </div>
+      <div class="card">
+        <h3>Progress</h3>
+        <div class="big" id="goalProgress">–</div>
+        <div class="delta muted" id="goalRemaining"></div>
+      </div>
+    </div>
+
+    <div id="goalAlert"></div>
+
+    <div class="section-title">Weight / Body Composition History</div>
+    <div class="card">
+      <div class="chart-wrap"><canvas id="chartGoalWeight"></canvas></div>
+      <div class="footnote">Solid markers = direct scale readings. Hollow markers = estimated from Hume BMI (weight = BMI × height² ÷ 703, height {{HEIGHT_FT}} ft). Dashed line = 240 lb target.</div>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:16px;">
+      <div class="card">
+        <h3>Body Fat % Trend</h3>
+        <div class="chart-wrap short"><canvas id="chartBodyFat"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>BMI Trend</h3>
+        <div class="chart-wrap short"><canvas id="chartBMI"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUTRITION -->
+  <div class="tabpanel" id="tab-nutrition">
+    <div class="section-title">Daily Check-In</div>
+    <div class="card">
+      <p style="margin-top:0;">Check-ins now live in a Google Sheet instead of this browser, so logging from your phone, office desktop, or laptop all land in the same place.</p>
+      <div class="btn-row" style="margin-top:0;">
+        <a class="btn" id="sheetLinkBtn" href="{{SHEET_URL}}" target="_blank" rel="noopener">Open Check-In Sheet</a>
+        <button class="btn secondary" onclick="exportCheckins(); return false;">Export Loaded Data as CSV</button>
+      </div>
+      <div class="footnote">Add rows directly in the Sheet (date, weight, waist, bp, calories, protein, water, alcohol, strength, notes — same columns shown below). The charts and table on this page reflect the Sheet as of the last time this dashboard was rebuilt — ask Claude to "refresh the Project 240 dashboard" after logging new entries to pull them in.</div>
+    </div>
+
+    <div class="section-title">Nutrition Targets</div>
+    <div class="grid cols-4">
+      <div class="card"><h3>Daily Calorie Target</h3><div class="big" id="targetCalories">–</div></div>
+      <div class="card"><h3>Daily Protein Target</h3><div class="big" id="targetProtein">–</div></div>
+      <div class="card"><h3>Water Target</h3><div class="big">100 <small>fl oz</small></div></div>
+      <div class="card"><h3>7-Day Avg Logged Calories</h3><div class="big" id="avgLoggedCalories">–</div></div>
+    </div>
+    <div class="footnote">Targets are placeholder estimates (~2 lb/week deficit from an estimated maintenance level at current weight/height). Adjust in the check-in log once you have a few weeks of consistent logging — this is not medical advice.</div>
+
+    <div class="section-title">Nutrition Trend (from your check-ins)</div>
+    <div class="card">
+      <div class="chart-wrap"><canvas id="chartNutrition"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TRAINING -->
+  <div class="tabpanel" id="tab-training">
+    <div class="grid cols-4">
+      <div class="card"><h3>All-Time Workouts</h3><div class="big" id="trAllCount">–</div></div>
+      <div class="card"><h3>All-Time Minutes</h3><div class="big" id="trAllMinutes">–</div></div>
+      <div class="card"><h3>Last 90 Days — Sessions/Week</h3><div class="big" id="tr90Weekly">–</div></div>
+      <div class="card"><h3>Last 90 Days — Minutes/Week</h3><div class="big" id="tr90Minutes">–</div></div>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:16px;">
+      <div class="card">
+        <h3>Workout Mix (All-Time)</h3>
+        <div class="chart-wrap"><canvas id="chartWorkoutMix"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Weekly Training Volume (last 26 weeks)</h3>
+        <div class="chart-wrap"><canvas id="chartWorkoutVolume"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-title">Recent Workouts</div>
+    <div class="card">
+      <table id="recentWorkoutsTable">
+        <thead><tr><th>Date</th><th>Type</th><th>Duration</th><th>Energy</th><th>Distance</th><th>Source</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VITALS & GLUCOSE -->
+  <div class="tabpanel" id="tab-vitals">
+    <div class="section-title">Glucose (Stelo)</div>
+    <div class="grid cols-4">
+      <div class="card"><h3>30-Day Avg</h3><div class="big" id="gluc30">–</div></div>
+      <div class="card"><h3>7-Day Avg</h3><div class="big" id="gluc7">–</div></div>
+      <div class="card"><h3>Total Readings</h3><div class="big" id="glucCount">–</div></div>
+      <div class="card"><h3>Time in 70–140 mg/dL</h3><div class="big" id="glucTIR">–</div></div>
+    </div>
+    <div class="grid cols-2" style="margin-top:16px;">
+      <div class="card">
+        <h3>Glucose Trend</h3>
+        <div class="chart-wrap"><canvas id="chartGlucoseTrend"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Time-in-Range Breakdown</h3>
+        <div class="chart-wrap"><canvas id="chartGlucoseTIR"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-title">Heart Rate, Sleep &amp; Oxygen</div>
+    <div class="grid cols-3">
+      <div class="card"><h3>Resting HR (30d avg)</h3><div class="big" id="vRestingHR">–</div></div>
+      <div class="card"><h3>Sleep (30d avg)</h3><div class="big" id="vSleep">–</div></div>
+      <div class="card"><h3>SpO₂ (30d avg)</h3><div class="big" id="vSpo2">–</div></div>
+    </div>
+    <div class="grid cols-2" style="margin-top:16px;">
+      <div class="card">
+        <h3>Resting Heart Rate — Last 180 Days</h3>
+        <div class="chart-wrap"><canvas id="chartRHR"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Sleep Hours — Last 180 Days</h3>
+        <div class="chart-wrap"><canvas id="chartSleep"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-title">Data Notes</div>
+    <div class="card footnote" id="dataNotesBox"></div>
+  </div>
+
+  <!-- FULL HISTORY -->
+  <div class="tabpanel" id="tab-history">
+    <div class="flex-between">
+      <select class="metric-picker" id="historyMetricPicker"></select>
+      <div class="range-picker" id="historyRangePicker">
+        <button data-range="90">90D</button>
+        <button data-range="365">1Y</button>
+        <button data-range="1825">5Y</button>
+        <button data-range="all" class="active">All</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chart-wrap" style="height:420px;"><canvas id="chartHistory"></canvas></div>
+      <div class="footnote">Ranges beyond 1 year are aggregated to weekly or monthly averages for readability. 10 years of daily-level data lives in the accompanying CSV for deeper analysis.</div>
+    </div>
+  </div>
+
+  <!-- CHECK-IN LOG -->
+  <div class="tabpanel" id="tab-log">
+    <div class="section-title">Saved Check-Ins</div>
+    <div class="card">
+      <p class="footnote" style="margin-top:0;">Synced from <a href="{{SHEET_URL}}" target="_blank" style="color:var(--accent)">the Google Sheet</a> as of the last dashboard rebuild.</p>
+      <table id="logTable">
+        <thead><tr><th>Date</th><th>Weight</th><th>Waist</th><th>BP</th><th>Cal</th><th>Protein</th><th>Water</th><th>Alcohol</th><th>Strength</th><th>Notes</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="btn-row">
+        <a class="btn" href="{{SHEET_URL}}" target="_blank" rel="noopener">Open Check-In Sheet</a>
+        <button class="btn secondary" onclick="exportCheckins(); return false;">Export CSV</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const DAILY = /*__DAILY_JSON__*/;
+const WORKOUTS = /*__WORKOUTS_JSON__*/;
+const SUMMARY = /*__SUMMARY_JSON__*/;
+const CHECKINS = /*__CHECKINS_JSON__*/;
+const SHEET_URL = "{{SHEET_URL}}";
+
+document.getElementById('genDate').textContent = SUMMARY.generated_at;
+document.getElementById('dataThrough').textContent = SUMMARY.date_range.end;
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tabpanel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ---------- helpers ----------
+const dailyByDate = {};
+DAILY.forEach(r => dailyByDate[r.date] = r);
+const sortedDates = DAILY.map(r => r.date).sort();
+
+function fmt(v, decimals=1, suffix='') {
+  if (v === null || v === undefined || isNaN(v)) return '–';
+  return Number(v).toFixed(decimals) + suffix;
+}
+function daysAgoStr(n) {
+  const d = new Date('2026-07-27T00:00:00');
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0,10);
+}
+function CHART_COLORS() {
+  return { accent:'#4f8dfd', good:'#34d399', warn:'#fbbf24', bad:'#f87171', purple:'#a78bfa', grid:'rgba(255,255,255,0.06)', text:'#8b95ab' };
+}
+Chart.defaults.color = '#8b95ab';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+Chart.defaults.font.family = "-apple-system, 'Segoe UI', sans-serif";
+
+function baseLineOptions(extra) {
+  return Object.assign({
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { labels: { boxWidth: 12 } } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: 'rgba(255,255,255,0.06)' } }
+    }
+  }, extra || {});
+}
+
+// ============ OVERVIEW ============
+function renderOverview() {
+  const c = CHART_COLORS();
+  const alerts = [];
+
+  // data gap detection: last 8 days missing resting HR / sleep / spo2 (garmin sync gap)
+  const cutoff = SUMMARY.data_notes.garmin_connect_step_data_ends;
+  const lastDate = SUMMARY.date_range.end;
+  if (cutoff < lastDate) {
+    alerts.push(`<div class="alert">Garmin (Connect) data stopped syncing after <b>${cutoff}</b> — resting heart rate, sleep, and SpO₂ have no readings since then. Check the watch's sync/battery.</div>`);
+  }
+
+  const weight = SUMMARY.weight;
+  alerts.push(`<div class="alert">Weight trend has a real gap: last direct scale reading was <b>${weight.last_measured.value} lb</b> on ${weight.last_measured.date}. Everything since is a BMI-derived estimate (currently <b>${weight.last_estimated_from_bmi.value} lb</b> as of ${weight.last_estimated_from_bmi.date}) — not a scale weigh-in.</div>`);
+
+  document.getElementById('overviewAlerts').innerHTML = alerts.join('');
+
+  const m = SUMMARY.metric_period_averages;
+  const cards = [
+    ['30-Day Steps/Day', fmt(m.steps.d30.avg,0), `n=${m.steps.d30.n} days`],
+    ['30-Day Sleep', fmt(m.sleep_hours.d30.avg,2,' hrs'), `n=${m.sleep_hours.d30.n} nights`],
+    ['30-Day Resting HR', fmt(m.resting_hr.d30.avg,0,' bpm'), `n=${m.resting_hr.d30.n} days`],
+    ['30-Day Glucose Avg', fmt(m.glucose_avg.d30.avg,1,' mg/dL'), `n=${m.glucose_avg.d30.n} days`],
+  ];
+  document.getElementById('overviewCards').innerHTML = cards.map(([t,v,d]) =>
+    `<div class="card"><h3>${t}</h3><div class="big">${v}</div><div class="delta muted">${d}</div></div>`).join('');
+
+  // weekly score (simple composite from available recent data, transparent formula)
+  let score = 0, maxScore = 0, parts = [];
+  function scoreComponent(label, ok, weight) {
+    maxScore += weight;
+    if (ok === true) { score += weight; parts.push(`✓ ${label}`); }
+    else if (ok === false) { parts.push(`— ${label}`); }
+  }
+  const s30 = m.sleep_hours.d30.avg, r30 = m.resting_hr.d30.avg, g30 = m.glucose_avg.d30.avg, st30 = m.steps.d30.avg;
+  scoreComponent('Sleep ≥ 7h (30d avg)', s30 !== null ? s30 >= 7 : null, 25);
+  scoreComponent('Glucose avg in 70–140', g30 !== null ? (g30 >= 70 && g30 <= 140) : null, 25);
+  scoreComponent('Steps ≥ 7,000/day (30d avg)', st30 !== null ? st30 >= 7000 : null, 25);
+  scoreComponent('Trained ≥ 3x in last 7 days', true, 0); // placeholder, recalculated below
+  const last7workouts = WORKOUTS.filter(w => w.date >= daysAgoStr(7)).length;
+  parts.pop();
+  scoreComponent('Trained ≥ 3x in last 7 days', last7workouts >= 3, 25);
+  const pct = maxScore ? Math.round(100 * score / maxScore) : 0;
+  document.getElementById('headerScore').innerHTML = `Weekly Health Score: <b style="color:${pct>=70?c.good:pct>=40?c.warn:c.bad}">${pct}%</b>`;
+
+  document.getElementById('priorityList').innerHTML = parts.map(p => `<li>${p}</li>`).join('') +
+    (st30 !== null && st30 < 7000 ? `<li>Steps are trending low (${fmt(st30,0)}/day) — worth a short walk goal this week.</li>` : '') +
+    (r30 !== null && r30 > 60 ? `<li>Resting HR (${fmt(r30,0)} bpm) is a touch elevated vs. baseline — watch recovery and hydration.</li>` : '');
+
+  // weight chart (last ~2 years for overview)
+  const weightPts = weight.measured_events.concat(weight.estimated_events).sort((a,b)=>a.date.localeCompare(b.date));
+  new Chart(document.getElementById('chartOverviewWeight'), {
+    type: 'line',
+    data: { datasets: [{
+      label: 'Weight (lb)',
+      data: weightPts.map(p => ({x:p.date, y:p.value})),
+      borderColor: c.accent, backgroundColor: 'transparent', tension: 0.15,
+      pointRadius: weightPts.map(p => p.type === 'measured' ? 3 : 2),
+      pointBackgroundColor: weightPts.map(p => p.type === 'measured' ? c.accent : 'transparent'),
+      pointBorderColor: c.accent,
+      spanGaps: true,
+    }]},
+    options: baseLineOptions({ scales: { x: { type: 'time', time: { unit: 'year' }, grid:{display:false} }, y: { grid: { color: 'rgba(255,255,255,0.06)' } } } })
+  });
+
+  // glucose last 30 days
+  const g30days = sortedDates.filter(d => d >= daysAgoStr(30));
+  new Chart(document.getElementById('chartOverviewGlucose'), {
+    type: 'line',
+    data: { labels: g30days, datasets: [{
+      label: 'Glucose avg (mg/dL)',
+      data: g30days.map(d => dailyByDate[d].glucose_avg),
+      borderColor: c.purple, backgroundColor: 'rgba(167,139,250,0.1)', fill: true, tension: 0.25, spanGaps: true,
+    }]},
+    options: baseLineOptions()
+  });
+}
+
+// ============ PROJECT 240 GOAL ============
+function renderGoal() {
+  const c = CHART_COLORS();
+  const w = SUMMARY.weight;
+  const current = w.last_estimated_from_bmi;
+  document.getElementById('goalCurrent').innerHTML = `${current.value} <small>lb (est.)</small>`;
+  document.getElementById('goalCurrentSource').textContent = `From Hume BMI, ${current.date}`;
+
+  const startWeight = 300, target = 240;
+  const progressLb = startWeight - current.value;
+  const totalNeeded = startWeight - target;
+  const pct = Math.round(100 * progressLb / totalNeeded);
+  document.getElementById('goalProgress').innerHTML = `${pct}%`;
+  document.getElementById('goalRemaining').textContent = current.value > startWeight
+    ? `${(current.value - startWeight).toFixed(1)} lb above baseline`
+    : `${(current.value - target).toFixed(1)} lb to go`;
+
+  if (current.value >= startWeight) {
+    document.getElementById('goalAlert').innerHTML = `<div class="alert bad">Current estimate (${current.value} lb) is at or above the 300 lb starting point. The last confirmed scale reading (${w.last_measured.value} lb, ${w.last_measured.date}) was lower — worth a real weigh-in to confirm where things actually stand before trusting the BMI estimate.</div>`;
+  }
+
+  const weightPts = w.measured_events.concat(w.estimated_events).sort((a,b)=>a.date.localeCompare(b.date));
+  new Chart(document.getElementById('chartGoalWeight'), {
+    type: 'line',
+    data: { datasets: [
+      {
+        label: 'Weight (lb)',
+        data: weightPts.map(p => ({x:p.date, y:p.value})),
+        borderColor: c.accent, backgroundColor: 'transparent', tension: 0.15,
+        pointRadius: weightPts.map(p => p.type === 'measured' ? 4 : 3),
+        pointStyle: weightPts.map(p => p.type === 'measured' ? 'circle' : 'circle'),
+        pointBackgroundColor: weightPts.map(p => p.type === 'measured' ? c.accent : 'rgba(0,0,0,0)'),
+        pointBorderColor: c.accent, pointBorderWidth: 2,
+        spanGaps: true,
+      },
+      {
+        label: 'Target (240 lb)',
+        data: weightPts.length ? [{x:weightPts[0].date,y:240},{x:weightPts[weightPts.length-1].date,y:240}] : [],
+        borderColor: c.good, borderDash: [6,4], pointRadius: 0,
+      }
+    ]},
+    options: baseLineOptions({ scales: { x: { type:'time', time:{unit:'year'}, grid:{display:false} }, y: { grid:{color:'rgba(255,255,255,0.06)'} } } })
+  });
+
+  new Chart(document.getElementById('chartBodyFat'), {
+    type: 'line',
+    data: { datasets: [{ label:'Body Fat %', data: w.body_fat_events.map(p=>({x:p.date,y:p.value})), borderColor:c.warn, tension:0.2, spanGaps:true }] },
+    options: baseLineOptions({ scales:{ x:{type:'time', time:{unit:'month'}, grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.06)'}} } })
+  });
+  new Chart(document.getElementById('chartBMI'), {
+    type: 'line',
+    data: { datasets: [{ label:'BMI', data: w.bmi_events.map(p=>({x:p.date,y:p.value})), borderColor:c.purple, tension:0.2, spanGaps:true }] },
+    options: baseLineOptions({ scales:{ x:{type:'time', time:{unit:'month'}, grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.06)'}} } })
+  });
+}
+
+// ============ NUTRITION ============
+function estimateMaintenanceCalories() {
+  // Mifflin-St Jeor rough estimate using current weight estimate, height, assume age from context, moderate activity
+  const weight_kg = SUMMARY.weight.last_estimated_from_bmi.value * 0.453592;
+  const height_cm = SUMMARY.height_in * 2.54;
+  const age = 56; // approx from DOB 1969-10-04 as of 2026
+  const bmr = 10*weight_kg + 6.25*height_cm - 5*age + 5;
+  const maintenance = bmr * 1.375; // lightly active
+  return Math.round(maintenance / 50) * 50;
+}
+function renderNutritionTargets() {
+  const maint = estimateMaintenanceCalories();
+  const target = maint - 750; // ~1.5lb/week deficit
+  document.getElementById('targetCalories').innerHTML = `${target} <small>kcal</small>`;
+  const proteinTarget = Math.round(SUMMARY.weight.last_estimated_from_bmi.value * 0.8);
+  document.getElementById('targetProtein').innerHTML = `${proteinTarget} <small>g</small>`;
+}
+
+function renderNutritionChart() {
+  const c = CHART_COLORS();
+  const logs = getCheckins().sort((a,b)=>a.date.localeCompare(b.date));
+  const last7 = logs.filter(l => l.calories).slice(-7);
+  const avgCal = last7.length ? Math.round(last7.reduce((s,l)=>s+Number(l.calories),0)/last7.length) : null;
+  document.getElementById('avgLoggedCalories').innerHTML = avgCal ? `${avgCal} <small>kcal</small>` : '–';
+
+  const chartEl = document.getElementById('chartNutrition');
+  if (window._nutritionChart) window._nutritionChart.destroy();
+  window._nutritionChart = new Chart(chartEl, {
+    type: 'bar',
+    data: {
+      labels: logs.map(l=>l.date),
+      datasets: [
+        { type:'line', label:'Protein (g)', data: logs.map(l=>l.protein||null), borderColor:c.good, yAxisID:'y1', spanGaps:true },
+        { label:'Calories', data: logs.map(l=>l.calories||null), backgroundColor:'rgba(79,141,253,0.5)', yAxisID:'y' },
+      ]
+    },
+    options: baseLineOptions({
+      scales: {
+        x: { grid:{display:false} },
+        y: { position:'left', grid:{color:'rgba(255,255,255,0.06)'} },
+        y1: { position:'right', grid:{display:false} },
+      }
+    })
+  });
+}
+
+// ============ TRAINING ============
+function renderTraining() {
+  const c = CHART_COLORS();
+  const ws = SUMMARY.workouts;
+  document.getElementById('trAllCount').textContent = ws.all_time_count;
+  document.getElementById('trAllMinutes').textContent = Math.round(ws.all_time_minutes).toLocaleString();
+  document.getElementById('tr90Weekly').textContent = ws.last_90_days.weekly_avg_sessions;
+  document.getElementById('tr90Minutes').textContent = Math.round(ws.last_90_days.weekly_avg_minutes);
+
+  const types = Object.entries(ws.by_type).slice(0,8);
+  new Chart(document.getElementById('chartWorkoutMix'), {
+    type: 'doughnut',
+    data: {
+      labels: types.map(([k])=>k),
+      datasets: [{ data: types.map(([,v])=>v.count), backgroundColor: ['#4f8dfd','#34d399','#fbbf24','#f87171','#a78bfa','#60a5fa','#f472b6','#94a3b8'] }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:11}}}} }
+  });
+
+  // weekly volume last 26 weeks
+  const weeks = [];
+  for (let i=25;i>=0;i--) {
+    const end = new Date('2026-07-27T00:00:00'); end.setDate(end.getDate() - i*7);
+    const start = new Date(end); start.setDate(start.getDate()-6);
+    const s = start.toISOString().slice(0,10), e = end.toISOString().slice(0,10);
+    const mins = WORKOUTS.filter(w => w.date >= s && w.date <= e).reduce((sum,w)=>sum+w.duration_min,0);
+    weeks.push({label: s, minutes: Math.round(mins)});
+  }
+  new Chart(document.getElementById('chartWorkoutVolume'), {
+    type: 'bar',
+    data: { labels: weeks.map(w=>w.label), datasets: [{ label:'Minutes', data: weeks.map(w=>w.minutes), backgroundColor:'rgba(79,141,253,0.6)' }] },
+    options: baseLineOptions({ plugins:{legend:{display:false}} })
+  });
+
+  const recent = WORKOUTS.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,25);
+  document.querySelector('#recentWorkoutsTable tbody').innerHTML = recent.map(w =>
+    `<tr><td>${w.date}</td><td>${w.type}</td><td>${fmt(w.duration_min,0,' min')}</td><td>${fmt(w.energy_kcal,0,' kcal')}</td><td>${fmt(w.distance_mi,2,' mi')}</td><td>${w.source}</td></tr>`
+  ).join('');
+}
+
+// ============ VITALS & GLUCOSE ============
+function renderVitals() {
+  const c = CHART_COLORS();
+  const m = SUMMARY.metric_period_averages;
+  const tir = SUMMARY.glucose_time_in_range;
+  document.getElementById('gluc30').textContent = fmt(m.glucose_avg.d30.avg,1,' mg/dL');
+  document.getElementById('gluc7').textContent = fmt(m.glucose_avg.d7.avg,1,' mg/dL');
+  document.getElementById('glucCount').textContent = tir.total_readings.toLocaleString();
+  document.getElementById('glucTIR').textContent = tir.in_70_140_pct + '%';
+
+  document.getElementById('vRestingHR').textContent = fmt(m.resting_hr.d30.avg,0,' bpm');
+  document.getElementById('vSleep').textContent = fmt(m.sleep_hours.d30.avg,2,' hrs');
+  document.getElementById('vSpo2').textContent = fmt(m.spo2_avg_pct.d30.avg,1,'%');
+
+  const g90days = sortedDates.filter(d => d >= daysAgoStr(90) && dailyByDate[d].glucose_avg !== null);
+  new Chart(document.getElementById('chartGlucoseTrend'), {
+    type:'line',
+    data:{ labels:g90days, datasets:[{ label:'Glucose avg', data:g90days.map(d=>dailyByDate[d].glucose_avg), borderColor:c.purple, backgroundColor:'rgba(167,139,250,0.1)', fill:true, tension:0.25 }]},
+    options: baseLineOptions()
+  });
+
+  new Chart(document.getElementById('chartGlucoseTIR'), {
+    type:'doughnut',
+    data:{ labels:['<70','70–140','141–180','>180'], datasets:[{ data:[tir.below_70_pct,tir.in_70_140_pct,tir.in_141_180_pct,tir.above_180_pct], backgroundColor:[c.bad,c.good,c.warn,'#ef4444'] }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:11}}}} }
+  });
+
+  const rhrDays = sortedDates.filter(d => d >= daysAgoStr(180) && dailyByDate[d].resting_hr !== null);
+  new Chart(document.getElementById('chartRHR'), {
+    type:'line',
+    data:{ labels:rhrDays, datasets:[{ label:'Resting HR', data:rhrDays.map(d=>dailyByDate[d].resting_hr), borderColor:c.accent, tension:0.2 }]},
+    options: baseLineOptions()
+  });
+  const sleepDays = sortedDates.filter(d => d >= daysAgoStr(180) && dailyByDate[d].sleep_hours !== null);
+  new Chart(document.getElementById('chartSleep'), {
+    type:'bar',
+    data:{ labels:sleepDays, datasets:[{ label:'Sleep hrs', data:sleepDays.map(d=>dailyByDate[d].sleep_hours), backgroundColor:'rgba(52,211,153,0.5)' }]},
+    options: baseLineOptions({ plugins:{legend:{display:false}} })
+  });
+
+  const notes = SUMMARY.data_notes;
+  document.getElementById('dataNotesBox').innerHTML = `
+    <b>Step counting:</b> ${notes.step_methodology}<br><br>
+    <b>Weight:</b> ${notes.weight_gap}<br><br>
+    <b>Blood pressure:</b> ${notes.blood_pressure}<br><br>
+    <b>HRV:</b> ${notes.hrv}<br><br>
+    <b>Excluded outliers:</b> ${notes.excluded_outliers.join(', ') || 'none'} (scale readings wildly inconsistent with neighboring days).
+  `;
+}
+
+// ============ FULL HISTORY ============
+const HISTORY_METRICS = [
+  ['steps','Steps'], ['distance_mi','Distance (mi)'], ['active_energy_kcal','Active Energy (kcal)'],
+  ['sleep_hours','Sleep (hrs)'], ['resting_hr','Resting HR'], ['spo2_avg_pct','SpO2 (%)'],
+  ['glucose_avg','Glucose (avg)'], ['weight_lb','Weight (lb, measured only)'], ['flights','Flights Climbed'],
+];
+let historyRange = 'all';
+function renderHistoryPicker() {
+  const sel = document.getElementById('historyMetricPicker');
+  sel.innerHTML = HISTORY_METRICS.map(([k,l]) => `<option value="${k}">${l}</option>`).join('');
+  sel.addEventListener('change', renderHistoryChart);
+  document.querySelectorAll('#historyRangePicker button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#historyRangePicker button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      historyRange = btn.dataset.range;
+      renderHistoryChart();
+    });
+  });
+}
+function aggregate(rows, field, bucket) {
+  // bucket: 'day' | 'week' | 'month'
+  const groups = {};
+  rows.forEach(r => {
+    const v = r[field];
+    if (v === null || v === undefined) return;
+    let key = r.date;
+    if (bucket === 'week') {
+      const d = new Date(r.date + 'T00:00:00');
+      const day = d.getDay();
+      d.setDate(d.getDate() - day);
+      key = d.toISOString().slice(0,10);
+    } else if (bucket === 'month') {
+      key = r.date.slice(0,7) + '-01';
+    }
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(v);
+  });
+  return Object.entries(groups).map(([k,vals]) => ({x:k, y: vals.reduce((a,b)=>a+b,0)/vals.length})).sort((a,b)=>a.x.localeCompare(b.x));
+}
+let historyChart = null;
+function renderHistoryChart() {
+  const c = CHART_COLORS();
+  const field = document.getElementById('historyMetricPicker').value || 'steps';
+  let rows = DAILY;
+  let bucket = 'day';
+  if (historyRange !== 'all') {
+    const days = parseInt(historyRange);
+    rows = DAILY.filter(r => r.date >= daysAgoStr(days));
+    bucket = days > 400 ? 'week' : 'day';
+  } else {
+    bucket = 'month';
+  }
+  const pts = aggregate(rows, field, bucket);
+  if (historyChart) historyChart.destroy();
+  historyChart = new Chart(document.getElementById('chartHistory'), {
+    type: 'line',
+    data: { datasets: [{ label: field, data: pts, borderColor: c.accent, backgroundColor:'rgba(79,141,253,0.08)', fill:true, tension:0.2, pointRadius: bucket==='day'?1:2, spanGaps:true }] },
+    options: baseLineOptions({ scales: { x: { type:'time', time:{ unit: bucket==='month'?'year':(bucket==='week'?'month':'week') }, grid:{display:false} }, y:{grid:{color:'rgba(255,255,255,0.06)'}} } , plugins:{legend:{display:false}}})
+  });
+}
+
+// ============ CHECK-IN LOG (backed by Google Sheet, embedded at build time) ============
+// CHECKINS is embedded JSON pulled from the Sheet each time this dashboard is rebuilt.
+// There is no live write-back from this static file to the Sheet -- log entries directly
+// in the Sheet (link above), then ask Claude to rebuild this dashboard to pull them in.
+function getCheckins() { return CHECKINS || []; }
+function exportCheckins() {
+  const arr = getCheckins().slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const headers = ['date','weight','waist','bp','calories','protein','water','alcohol','strength','notes'];
+  let csv = headers.join(',') + '\n';
+  arr.forEach(r => { csv += headers.map(h => `"${(r[h]||'').toString().replace(/"/g,'""')}"`).join(',') + '\n'; });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'project240_checkins_export.csv';
+  a.click();
+}
+function renderLog() {
+  const arr = getCheckins().slice().sort((a,b)=>b.date.localeCompare(a.date));
+  document.querySelector('#logTable tbody').innerHTML = arr.map(r => `
+    <tr>
+      <td>${r.date}</td><td>${r.weight||''}</td><td>${r.waist||''}</td><td>${r.bp||''}</td>
+      <td>${r.calories||''}</td><td>${r.protein||''}</td><td>${r.water||''}</td><td>${r.alcohol||''}</td>
+      <td>${r.strength||''}</td><td>${r.notes||''}</td>
+    </tr>`).join('') || '<tr><td colspan="10" class="muted">No check-ins in the Sheet yet — <a href="'+SHEET_URL+'" target="_blank" style="color:var(--accent)">open it</a> and add today\'s.</td></tr>';
+  const linkBtn = document.getElementById('sheetLinkBtn');
+  if (linkBtn) linkBtn.href = SHEET_URL;
+}
+
+// ============ INIT ============
+renderOverview();
+renderGoal();
+renderNutritionTargets();
+renderTraining();
+renderVitals();
+renderHistoryPicker();
+renderHistoryChart();
+renderLog();
+renderNutritionChart();
+</script>
+</body>
+</html>

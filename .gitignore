@@ -1,0 +1,6 @@
+# Raw Apple Health exports are large (700MB+) and personal -- never commit them.
+exports/*
+!exports/.gitkeep
+
+# OS junk
+.DS_Store
