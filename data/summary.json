@@ -1578,6 +1578,7 @@
     "weeks_total": 26,
     "required_weekly_rate_lb": 2.74
   },
+  "workout_program_start_date": "2026-08-03",
   "workouts": {
     "all_time_count": 1048,
     "all_time_minutes": 93503.6,

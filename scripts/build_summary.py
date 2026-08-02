@@ -129,6 +129,12 @@ def main():
         "required_weekly_rate_lb": round(total_to_lose / GOAL_WEEKS, 2),
     }
 
+    # ---- Workout program start date ----
+    # Separate anchor from the weight-loss goal clock above -- Doug wants the training program's
+    # week/phase countdown to start on a specific Monday, independent of when the weight trajectory
+    # was set. Update by hand only if Doug explicitly resets the program start.
+    WORKOUT_PROGRAM_START_DATE = "2026-08-03"
+
     gt = glucose_buckets.get("total", 0)
     summary = {
         "generated_at": TODAY.strftime("%Y-%m-%d"),
@@ -150,6 +156,7 @@ def main():
             "goal_start_lb": goal_start_lb, "goal_target_lb": goal_target_lb,
         },
         "six_month_goal": six_month_goal,
+        "workout_program_start_date": WORKOUT_PROGRAM_START_DATE,
         "workouts": workout_summary,
         "sleep_days_with_data_last_30": sleep_days_30,
         "data_notes": {
