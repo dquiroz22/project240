@@ -75,6 +75,10 @@
   .daycard .mealrow { font-size: 12px; line-height: 1.5; }
   .daycard .mealrow b { color: var(--muted); font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: .03em; display: block; }
   .today-card { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .macroline { font-size: 11.5px; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--border); line-height: 1.7; }
+  .macroline b { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 2px; }
+  .macroline .mstat.good { color: var(--good); font-weight: 600; }
+  .macroline .mstat.bad { color: var(--bad); font-weight: 600; }
   .card {
     background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
     padding: 18px;
@@ -897,6 +901,7 @@ function renderNutritionTargets() {
   const proteinTarget = Math.round(goalWeightLb * 1.0 / 5) * 5;
   document.getElementById('targetProtein').innerHTML = `${proteinTarget} <small>g</small>`;
   const fatTarget = Math.max(Math.round((target - proteinTarget * 4 - 40 * 4) / 9 / 5) * 5, 0); // remainder after protein + ~40g carb
+  window.NUTRITION_TARGETS = { calories: target, protein: proteinTarget, fat: fatTarget, carbCap: 50 };
   const mpCal = document.getElementById('mpCalories');
   if (mpCal) mpCal.innerHTML = `~${target} <small>kcal/day</small>`;
   const mpProt = document.getElementById('mpProtein');
@@ -914,6 +919,15 @@ function renderNutritionTargets() {
 
 // ============ MEAL PLAN WEEKLY CALENDAR ============
 const MEAL1 = 'Eggs+bacon+cheddar (4 eggs/1oz/1oz) + 9oz 90/10 beef+cheddar — ~121g protein';
+// Macros are protein_g, fat_g, carb_g, kcal -- computed from the exact quantities above/in MEAL_WEEK.
+const MEAL1_MACROS = { p: 121.0, f: 80.0, c: 2.7, k: 1210.5 };
+const MEAL2_MACROS = {
+  Monday:    { p: 112.0, f: 32.0, c: 0.0, k: 760.0 },   // chicken thighs, skinless, 14oz
+  Tuesday:   { p: 119.7, f: 63.2, c: 1.7, k: 1040.2 },  // beef taco bowl
+  Wednesday: { p: 110.6, f: 28.3, c: 0.0, k: 708.1 },   // pork tenderloin + butter
+  Thursday:  { p: 112.5, f: 58.5, c: 0.0, k: 936.0 },   // salmon
+  Friday:    { p: 116.1, f: 43.3, c: 0.0, k: 904.4 },   // sirloin steak + butter
+};
 const MEAL_WEEK = [
   { day: 'Monday', dinner: 'Chicken thighs, skinless — 14oz cooked (400g)' },
   { day: 'Tuesday', dinner: 'Beef taco bowl — 14oz 90/10 beef, 1oz cheddar, 2 tbsp sour cream' },
@@ -944,6 +958,24 @@ function renderMealCalendar() {
     const dateStr = date.toISOString().slice(0, 10);
     const isToday = mealWeekOffset === 0 && dateStr === todayStr;
     const prepNote = d.prep ? '<span class="daybadge prep">Meal Prep Day</span>' : '';
+    const m2 = MEAL2_MACROS[d.day];
+    const t = window.NUTRITION_TARGETS || { calories: 2350, protein: 240, fat: 135, carbCap: 50 };
+    let macroBlock;
+    if (m2) {
+      const p = Math.round((MEAL1_MACROS.p + m2.p) * 10) / 10;
+      const f = Math.round((MEAL1_MACROS.f + m2.f) * 10) / 10;
+      const c = Math.round((MEAL1_MACROS.c + m2.c) * 10) / 10;
+      const k = Math.round(MEAL1_MACROS.k + m2.k);
+      const pClass = p >= t.protein * 0.9 ? 'good' : 'bad';
+      const cClass = c <= t.carbCap ? 'good' : 'bad';
+      macroBlock = `<div class="macroline"><b>Day Total vs. Target</b>
+        <span class="mstat ${pClass}">${p}g protein</span> (target ${t.protein}g) ·
+        ${f}g fat (target ~${t.fat}g) ·
+        <span class="mstat ${cClass}">${c}g carb</span> (cap ${t.carbCap}g) ·
+        ${k} kcal (target ~${t.calories})</div>`;
+    } else {
+      macroBlock = `<div class="macroline"><b>Day Total</b>Meal 2 is a flex/leftover meal — log actual protein/calories in your check-in to see how the day landed.</div>`;
+    }
     return `<div class="card daycard${isToday ? ' today-card' : ''}">
       <div class="dayname">${d.day}${isToday ? ' <span class="muted">(today)</span>' : ''}</div>
       <div class="daydate">${monthDay(date)}</div>
@@ -951,6 +983,7 @@ function renderMealCalendar() {
       <div class="mealrow"><b>Meal 1 · ~1PM</b>${MEAL1}</div>
       <div class="mealrow"><b>Meal 2 · by 6PM</b>${d.dinner}</div>
       ${d.prep ? '<p class="daynote">Batch-cook next week\'s beef, egg muffins, and chicken this afternoon. Buy salmon + steak fresh mid-week.</p>' : ''}
+      ${macroBlock}
     </div>`;
   }).join('');
   const container = document.getElementById('mealWeekCalendar');
