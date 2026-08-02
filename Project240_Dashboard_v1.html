@@ -2268,7 +2268,7 @@ const SUMMARY = {
     "hrv": "No HRV records found in the Apple Health export as of the last parse."
   }
 };
-const CHECKINS = [{"date": "2026-08-02", "weight": "311.3", "waist": "", "bp": "", "calories": "", "protein": "", "water": "32 oz", "alcohol": "0", "strength": "", "notes": "", "meal_followed": "", "workout_completed": ""}];
+const CHECKINS = [{"date": "2026-08-02", "weight": "311.3", "waist": "", "bp": "", "calories": "", "protein": "", "water": "32 oz", "alcohol": "0", "strength": "", "notes": "", "meal_followed": "Y", "workout_completed": "N"}];
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1d2ZM4H6AUllHfCUfGON-q5qzgPIA5R24gkr86d39MPo/edit";
 
 document.getElementById('genDate').textContent = SUMMARY.generated_at;
@@ -2644,11 +2644,14 @@ function renderMealCalendar() {
     }
     const isFuture = mealWeekOffset > 0 || dateStr > todayStr;
     const ci = checkinForDate(dateStr);
+    const hasEntry = ci && ci.meal_followed !== undefined && ci.meal_followed !== '';
     const doneBlock = isFuture
       ? `<div class="donebox"><span class="upcoming">Upcoming — not logged yet</span></div>`
-      : (ci && truthyCheck(ci.meal_followed)
-          ? `<div class="donebox"><span class="done">✓ Meal plan followed</span></div>`
-          : `<div class="donebox"><span class="notdone">— Not logged in check-in Sheet</span></div>`);
+      : hasEntry
+        ? (truthyCheck(ci.meal_followed)
+            ? `<div class="donebox"><span class="done">✓ Meal plan followed</span></div>`
+            : `<div class="donebox"><span class="notdone">✗ Logged as not followed</span></div>`)
+        : `<div class="donebox"><span class="notdone">— Not logged in check-in Sheet</span></div>`;
     return `<div class="card daycard${isToday ? ' today-card' : ''}">
       <div class="dayname">${d.day}${isToday ? ' <span class="muted">(today)</span>' : ''}</div>
       <div class="daydate">${monthDay(date)}</div>
@@ -2826,11 +2829,14 @@ function renderWorkoutCalendar() {
     const taichi = d.day === 'Sunday' ? '' : '<p class="daynote">+ 10-min tai chi warm-up</p>';
     const isFuture = workoutWeekOffset > 0 || dateStr > todayStr;
     const ci = checkinForDate(dateStr);
+    const hasEntry = ci && ci.workout_completed !== undefined && ci.workout_completed !== '';
     const doneBlock = isFuture
       ? `<div class="donebox"><span class="upcoming">Upcoming — not logged yet</span></div>`
-      : (ci && truthyCheck(ci.workout_completed)
-          ? `<div class="donebox"><span class="done">✓ Workout completed</span></div>`
-          : `<div class="donebox"><span class="notdone">— Not logged in check-in Sheet</span></div>`);
+      : hasEntry
+        ? (truthyCheck(ci.workout_completed)
+            ? `<div class="donebox"><span class="done">✓ Workout completed</span></div>`
+            : `<div class="donebox"><span class="notdone">✗ Logged as not completed</span></div>`)
+        : `<div class="donebox"><span class="notdone">— Not logged in check-in Sheet</span></div>`;
     return `<div class="card daycard${isToday ? ' today-card' : ''}">
       <div class="dayname">${d.day}${isToday ? ' <span class="muted">(today)</span>' : ''}</div>
       <div class="daydate">${monthDay(date)}</div>

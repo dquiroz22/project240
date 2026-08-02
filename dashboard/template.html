@@ -998,11 +998,14 @@ function renderMealCalendar() {
     }
     const isFuture = mealWeekOffset > 0 || dateStr > todayStr;
     const ci = checkinForDate(dateStr);
+    const hasEntry = ci && ci.meal_followed !== undefined && ci.meal_followed !== '';
     const doneBlock = isFuture
       ? `<div class="donebox"><span class="upcoming">Upcoming — not logged yet</span></div>`
-      : (ci && truthyCheck(ci.meal_followed)
-          ? `<div class="donebox"><span class="done">✓ Meal plan followed</span></div>`
-          : `<div class="donebox"><span class="notdone">— Not logged in check-in Sheet</span></div>`);
+      : hasEntry
+        ? (truthyCheck(ci.meal_followed)
+            ? `<div class="donebox"><span class="done">✓ Meal plan followed</span></div>`
+            : `<div class="donebox"><span class="notdone">✗ Logged as not followed</span></div>`)
+        : `<div class="donebox"><span class="notdone">— Not logged in check-in Sheet</span></div>`;
     return `<div class="card daycard${isToday ? ' today-card' : ''}">
       <div class="dayname">${d.day}${isToday ? ' <span class="muted">(today)</span>' : ''}</div>
       <div class="daydate">${monthDay(date)}</div>
@@ -1180,11 +1183,14 @@ function renderWorkoutCalendar() {
     const taichi = d.day === 'Sunday' ? '' : '<p class="daynote">+ 10-min tai chi warm-up</p>';
     const isFuture = workoutWeekOffset > 0 || dateStr > todayStr;
     const ci = checkinForDate(dateStr);
+    const hasEntry = ci && ci.workout_completed !== undefined && ci.workout_completed !== '';
     const doneBlock = isFuture
       ? `<div class="donebox"><span class="upcoming">Upcoming — not logged yet</span></div>`
-      : (ci && truthyCheck(ci.workout_completed)
-          ? `<div class="donebox"><span class="done">✓ Workout completed</span></div>`
-          : `<div class="donebox"><span class="notdone">— Not logged in check-in Sheet</span></div>`);
+      : hasEntry
+        ? (truthyCheck(ci.workout_completed)
+            ? `<div class="donebox"><span class="done">✓ Workout completed</span></div>`
+            : `<div class="donebox"><span class="notdone">✗ Logged as not completed</span></div>`)
+        : `<div class="donebox"><span class="notdone">— Not logged in check-in Sheet</span></div>`;
     return `<div class="card daycard${isToday ? ' today-card' : ''}">
       <div class="dayname">${d.day}${isToday ? ' <span class="muted">(today)</span>' : ''}</div>
       <div class="daydate">${monthDay(date)}</div>
