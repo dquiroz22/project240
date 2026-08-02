@@ -275,7 +275,10 @@
       <p class="footnote" id="paceNote" style="margin:0;">–</p>
     </div>
 
-    <div class="section-title">This Week's Meals</div>
+    <div class="flex-between" style="margin-bottom:4px;">
+      <div class="section-title" style="margin:0;" id="mpCalendarTitle">This Week's Meals</div>
+      <button class="btn secondary" id="mpWeekToggle" style="padding:6px 12px; font-size:12px;">Preview Next Week</button>
+    </div>
     <div class="grid cols-7" id="mealWeekCalendar"></div>
     <div class="footnote">Breakfast, lunch, and snacks are batch-cooked once and repeat all week — that's the point, less decision-making. Dinner rotates between your two Sunday-prepped proteins so it's not the exact same plate seven nights running.</div>
 
@@ -358,8 +361,11 @@
     <div class="alert">Built around your left knee — every movement below either avoids deep knee flexion or has a knee-safe substitution called out. Stop and reassess (don't push through) if anything loads the knee wrong. Worth clearing with a doctor/PT before you start, given your size, the existing knee issue, and how aggressive the 6-month goal is.</div>
 
     <div class="flex-between" style="margin-bottom:4px;">
-      <div class="section-title" style="margin:0;">This Week's Schedule</div>
-      <div class="muted" style="font-size:12px;" id="wpPhaseLabel">–</div>
+      <div class="section-title" style="margin:0;" id="wpCalendarTitle">This Week's Schedule</div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="muted" style="font-size:12px;" id="wpPhaseLabel">–</div>
+        <button class="btn secondary" id="wpWeekToggle" style="padding:6px 12px; font-size:12px;">Preview Next Week</button>
+      </div>
     </div>
     <div class="grid cols-7" id="workoutWeekCalendar"></div>
     <div class="footnote">Sets/reps shown are for your current program phase, updated automatically as you move through the 26 weeks. Full phase-by-phase breakdown is below for reference.</div>
@@ -913,12 +919,18 @@ const MEAL_WEEK = [
   { day: 'Saturday', dinner: 'Flex meal — eating out or grilling is fine, stick to protein + fat, skip the bun/rice/potato' },
   { day: 'Sunday', dinner: 'Flex/leftovers — kitchen is about to be freshly stocked', prep: true },
 ];
+let mealWeekOffset = 0;
 function renderMealCalendar() {
+  const titleEl = document.getElementById('mpCalendarTitle');
+  if (titleEl) titleEl.textContent = mealWeekOffset === 0 ? "This Week's Meals" : "Next Week's Meals";
+  const toggleEl = document.getElementById('mpWeekToggle');
+  if (toggleEl) toggleEl.textContent = mealWeekOffset === 0 ? 'Preview Next Week' : 'Back to This Week';
+
   const buildToday = new Date(SUMMARY.generated_at + 'T00:00:00');
   const dow = buildToday.getDay();
   const mondayOffset = dow === 0 ? -6 : 1 - dow;
   const monday = new Date(buildToday);
-  monday.setDate(monday.getDate() + mondayOffset);
+  monday.setDate(monday.getDate() + mondayOffset + mealWeekOffset * 7);
   const todayStr = buildToday.toISOString().slice(0, 10);
   const monthDay = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -926,7 +938,7 @@ function renderMealCalendar() {
     const date = new Date(monday);
     date.setDate(date.getDate() + i);
     const dateStr = date.toISOString().slice(0, 10);
-    const isToday = dateStr === todayStr;
+    const isToday = mealWeekOffset === 0 && dateStr === todayStr;
     const prepNote = d.prep ? '<span class="daybadge prep">Meal Prep Day</span>' : '';
     return `<div class="card daycard${isToday ? ' today-card' : ''}">
       <div class="dayname">${d.day}${isToday ? ' <span class="muted">(today)</span>' : ''}</div>
@@ -1060,12 +1072,12 @@ const WORKOUT_WEEK = [
   { day: 'Saturday', badge: 'cardio', type: 'Cardio — Your Choice', key: null, note: 'Pickleball, a walk, or a bike ride — whatever you log counts toward the week.' },
   { day: 'Sunday', badge: 'rest', type: 'Recovery — Tai Chi Only', key: null, note: 'Full rest from loaded training. 20-min tai chi session is the whole session.' },
 ];
-function currentProgramPhase() {
+function currentProgramPhase(weekOffset) {
   const goal = SUMMARY.six_month_goal;
-  if (!goal) return { week: 1, phase: 1, phaseKey: 'p1', label: 'Phase 1 — Technique & Base' };
+  if (!goal) return { week: 1, phase: 1, phaseKey: 'p1', label: 'Technique & Base' };
   const buildToday = new Date(SUMMARY.generated_at + 'T00:00:00');
   const startDate = new Date(goal.start_date + 'T00:00:00');
-  const weeksElapsed = Math.max(0, Math.floor((buildToday - startDate) / (7 * 86400000)));
+  const weeksElapsed = Math.max(0, Math.floor((buildToday - startDate) / (7 * 86400000))) + (weekOffset || 0);
   const week = weeksElapsed + 1;
   let phase, phaseKey, label;
   if (week <= 4) { phase = 1; phaseKey = 'p1'; label = 'Technique & Base'; }
@@ -1074,16 +1086,21 @@ function currentProgramPhase() {
   else { phase = 4; phaseKey = 'p3'; label = 'Sustain & Push Volume (Phase 3 loads + progressive add-ons)'; }
   return { week, phase, phaseKey, label };
 }
+let workoutWeekOffset = 0;
 function renderWorkoutCalendar() {
-  const { week, phase, phaseKey, label } = currentProgramPhase();
+  const { week, phase, phaseKey, label } = currentProgramPhase(workoutWeekOffset);
   const phaseLabelEl = document.getElementById('wpPhaseLabel');
   if (phaseLabelEl) phaseLabelEl.textContent = `Program Week ${week} · Phase ${phase} — ${label}`;
+  const titleEl = document.getElementById('wpCalendarTitle');
+  if (titleEl) titleEl.textContent = workoutWeekOffset === 0 ? "This Week's Schedule" : "Next Week's Schedule";
+  const toggleEl = document.getElementById('wpWeekToggle');
+  if (toggleEl) toggleEl.textContent = workoutWeekOffset === 0 ? 'Preview Next Week' : 'Back to This Week';
 
   const buildToday = new Date(SUMMARY.generated_at + 'T00:00:00');
   const dow = buildToday.getDay(); // 0=Sun..6=Sat
   const mondayOffset = dow === 0 ? -6 : 1 - dow;
   const monday = new Date(buildToday);
-  monday.setDate(monday.getDate() + mondayOffset);
+  monday.setDate(monday.getDate() + mondayOffset + workoutWeekOffset * 7);
   const todayStr = buildToday.toISOString().slice(0, 10);
   const monthDay = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -1091,7 +1108,7 @@ function renderWorkoutCalendar() {
     const date = new Date(monday);
     date.setDate(date.getDate() + i);
     const dateStr = date.toISOString().slice(0, 10);
-    const isToday = dateStr === todayStr;
+    const isToday = workoutWeekOffset === 0 && dateStr === todayStr;
     const exercises = d.key ? DAY_EXERCISES[d.key] : null;
     const list = exercises
       ? `<ul>${exercises.map(e => `<li>${e.name}: ${e[phaseKey]}</li>`).join('')}</ul>`
@@ -1260,6 +1277,19 @@ safeRun('renderNutritionTargets', renderNutritionTargets);
 safeRun('renderMealCalendar', renderMealCalendar);
 safeRun('renderTraining', renderTraining);
 safeRun('renderWorkoutCalendar', renderWorkoutCalendar);
+
+safeRun('wireWeekToggles', function wireWeekToggles() {
+  const wpBtn = document.getElementById('wpWeekToggle');
+  if (wpBtn) wpBtn.addEventListener('click', () => {
+    workoutWeekOffset = workoutWeekOffset === 0 ? 1 : 0;
+    renderWorkoutCalendar();
+  });
+  const mpBtn = document.getElementById('mpWeekToggle');
+  if (mpBtn) mpBtn.addEventListener('click', () => {
+    mealWeekOffset = mealWeekOffset === 0 ? 1 : 0;
+    renderMealCalendar();
+  });
+});
 safeRun('renderVitals', renderVitals);
 safeRun('renderHistoryPicker', renderHistoryPicker);
 safeRun('renderHistoryChart', renderHistoryChart);
