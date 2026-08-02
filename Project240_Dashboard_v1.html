@@ -2912,11 +2912,16 @@ function renderHistoryChart() {
     bucket = 'month';
   }
   const pts = aggregate(rows, field, bucket);
+  const vals = pts.map(p=>p.y).filter(v => v !== null && v !== undefined && !isNaN(v));
+  const avg = vals.length ? vals.reduce((a,b)=>a+b,0) / vals.length : null;
   if (historyChart) historyChart.destroy();
   historyChart = safeChart(document.getElementById('chartHistory'), {
     type: 'line',
-    data: { labels: pts.map(p=>p.x), datasets: [{ label: field, data: pts.map(p=>p.y), borderColor: c.accent, backgroundColor:'rgba(79,141,253,0.08)', fill:true, tension:0.2, pointRadius: bucket==='day'?1:2, spanGaps:true }] },
-    options: baseLineOptions({ scales: { x: { grid:{display:false}, ticks:{ maxTicksLimit: 12 } }, y:{grid:{color:'rgba(255,255,255,0.06)'}} } , plugins:{legend:{display:false}}})
+    data: { labels: pts.map(p=>p.x), datasets: [
+      { label: field, data: pts.map(p=>p.y), borderColor: c.accent, backgroundColor:'rgba(79,141,253,0.08)', fill:true, tension:0.2, pointRadius: bucket==='day'?1:2, spanGaps:true },
+      { label: 'Average', data: pts.map(()=>avg), borderColor: c.warn, borderDash: [6,4], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0 },
+    ] },
+    options: baseLineOptions({ scales: { x: { grid:{display:false}, ticks:{ maxTicksLimit: 12 } }, y:{grid:{color:'rgba(255,255,255,0.06)'}} } , plugins:{legend:{display:true, labels:{boxWidth:10, font:{size:11}}}}})
   });
 }
 
