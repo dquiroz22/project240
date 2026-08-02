@@ -567,6 +567,14 @@
       </div>
     </div>
 
+    <div class="section-title">Body Composition</div>
+    <div class="grid cols-3">
+      <div class="card"><h3>Weight (est.)</h3><div class="big" id="vWeight">–</div><div class="delta muted" id="vWeightSource"></div></div>
+      <div class="card"><h3>BMI</h3><div class="big" id="vBMI">–</div></div>
+      <div class="card"><h3>Body Fat %</h3><div class="big" id="vBodyFat">–</div></div>
+    </div>
+    <div class="footnote">Blood pressure, lean body mass, and respiratory rate aren't shown here because there's no data for them in Apple Health — nothing currently syncing reports those metrics. Full trend charts for weight/BMI/body fat live on the Project 240 Goal tab.</div>
+
     <div class="section-title">Data Notes</div>
     <div class="card footnote" id="dataNotesBox"></div>
   </div>
@@ -1175,6 +1183,17 @@ function renderVitals() {
   document.getElementById('vRestingHR').textContent = fmt(m.resting_hr.d30.avg,0,' bpm');
   document.getElementById('vSleep').textContent = fmt(m.sleep_hours.d30.avg,2,' hrs');
   document.getElementById('vSpo2').textContent = fmt(m.spo2_avg_pct.d30.avg,1,'%');
+
+  const w = SUMMARY.weight;
+  const latestWeight = w.last_estimated_from_bmi || w.last_measured;
+  if (latestWeight) {
+    document.getElementById('vWeight').innerHTML = `${latestWeight.value} <small>lb</small>`;
+    document.getElementById('vWeightSource').textContent = latestWeight === w.last_measured ? `Scale, ${latestWeight.date}` : `Hume BMI est., ${latestWeight.date}`;
+  }
+  const latestBMI = w.bmi_events.length ? w.bmi_events[w.bmi_events.length - 1] : null;
+  if (latestBMI) document.getElementById('vBMI').innerHTML = `${latestBMI.value} <small>${latestBMI.date}</small>`;
+  const latestBF = w.body_fat_events.length ? w.body_fat_events[w.body_fat_events.length - 1] : null;
+  if (latestBF) document.getElementById('vBodyFat').innerHTML = `${latestBF.value}% <small>${latestBF.date}</small>`;
 
   const g90days = sortedDates.filter(d => d >= daysAgoStr(90) && dailyByDate[d].glucose_avg !== null);
   safeChart(document.getElementById('chartGlucoseTrend'), {
