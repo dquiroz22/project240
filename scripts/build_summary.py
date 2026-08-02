@@ -105,6 +105,25 @@ def main():
     sleep_days_30 = sum(1 for i in range(30)
                          if rows_by_date.get((TODAY - timedelta(days=i)).strftime("%Y-%m-%d"), {}).get("sleep_hours"))
 
+    # ---- 6-month goal trajectory (300 -> 240 lb) ----
+    # Clock starts the day this goal was set (build reference date), not historical data --
+    # we don't retroactively invent progress against a target that didn't exist yet.
+    GOAL_WEEKS = 26
+    goal_start_date = TODAY
+    goal_target_date = TODAY + timedelta(weeks=GOAL_WEEKS)
+    goal_start_lb = 300.0
+    goal_target_lb = 240.0
+    total_to_lose = goal_start_lb - goal_target_lb
+    six_month_goal = {
+        "start_date": goal_start_date.strftime("%Y-%m-%d"),
+        "target_date": goal_target_date.strftime("%Y-%m-%d"),
+        "start_lb": goal_start_lb,
+        "target_lb": goal_target_lb,
+        "total_lb_to_lose": round(total_to_lose, 1),
+        "weeks_total": GOAL_WEEKS,
+        "required_weekly_rate_lb": round(total_to_lose / GOAL_WEEKS, 2),
+    }
+
     gt = glucose_buckets.get("total", 0)
     summary = {
         "generated_at": TODAY.strftime("%Y-%m-%d"),
@@ -125,6 +144,7 @@ def main():
             "body_fat_events": bf_events, "estimated_events": estimated_weight_events,
             "goal_start_lb": 300, "goal_target_lb": 240,
         },
+        "six_month_goal": six_month_goal,
         "workouts": workout_summary,
         "sleep_days_with_data_last_30": sleep_days_30,
         "data_notes": {

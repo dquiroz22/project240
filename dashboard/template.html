@@ -182,6 +182,17 @@
 
     <div id="goalAlert"></div>
 
+    <div class="section-title">6-Month Trajectory — 300 → 240 by <span id="goalTargetDate">–</span></div>
+    <div class="grid cols-3">
+      <div class="card"><h3>Required Pace</h3><div class="big" id="goalRequiredPace">–</div><div class="delta muted">Average needed for the full 6 months</div></div>
+      <div class="card"><h3>On Pace?</h3><div class="big" id="goalOnPace">–</div><div class="delta muted" id="goalOnPaceDetail"></div></div>
+      <div class="card"><h3>Weeks Remaining</h3><div class="big" id="goalWeeksLeft">–</div></div>
+    </div>
+    <div class="card" style="margin-top:12px;">
+      <div class="chart-wrap"><canvas id="chartTrajectory"></canvas></div>
+      <div class="footnote">Dashed line = the pace needed to hit 240 lb on schedule. Solid/hollow dots = your actual weight (measured vs. BMI-estimated). This clock started when the goal was set — expect the actual line to run below the dashed line early (water weight) and needs to stay there.</div>
+    </div>
+
     <div class="section-title">Weight / Body Composition History</div>
     <div class="card">
       <div class="chart-wrap"><canvas id="chartGoalWeight"></canvas></div>
@@ -229,14 +240,17 @@
 
   <!-- MEAL PLAN -->
   <div class="tabpanel" id="tab-mealplan">
-    <div class="alert">General educational guidance, not medical advice — worth a quick check-in with your doctor before starting keto given your goals and history, especially around blood glucose and any medications.</div>
+    <div class="alert">General educational guidance, not medical advice — worth a quick check-in with your doctor before ramping up a protein-forward, low-carb deficit this aggressively, especially around blood glucose and any medications.</div>
 
-    <div class="section-title">Keto Macro Targets</div>
+    <div class="section-title">High-Protein, Low-Carb Targets — Paced to 240 lb in 6 Months</div>
     <div class="grid cols-4">
-      <div class="card"><h3>Calories</h3><div class="big">~2,650 <small>kcal/day</small></div><div class="delta muted">Recalculates as weight drops — check the Nutrition tab targets periodically.</div></div>
-      <div class="card"><h3>Protein</h3><div class="big">~240 <small>g/day</small></div><div class="delta muted">~36% of calories. Priority #1 — protects muscle during the deficit.</div></div>
-      <div class="card"><h3>Net Carbs</h3><div class="big">&lt;30 <small>g/day</small></div><div class="delta muted">Net = total carbs − fiber. This is the hard ceiling.</div></div>
-      <div class="card"><h3>Fat</h3><div class="big">~150 <small>g/day</small></div><div class="delta muted">Fills the rest of your calories — adjust up/down to hit the calorie target.</div></div>
+      <div class="card"><h3>Calories</h3><div class="big" id="mpCalories">–</div><div class="delta muted">Recalculates as weight drops.</div></div>
+      <div class="card"><h3>Protein</h3><div class="big" id="mpProtein">–</div><div class="delta muted">1g per lb of your 240 lb goal weight — fixed target, doesn't drift down as the scale does.</div></div>
+      <div class="card"><h3>Net Carbs</h3><div class="big">&lt;50 <small>g/day</small></div><div class="delta muted">Net = total carbs − fiber. Hard ceiling, not a target to hit.</div></div>
+      <div class="card"><h3>Fat</h3><div class="big" id="mpFat">–</div><div class="delta muted">Fills whatever's left of your calories after protein.</div></div>
+    </div>
+    <div class="card" style="margin-top:12px;">
+      <p class="footnote" id="paceNote" style="margin:0;">–</p>
     </div>
 
     <div class="section-title">Ground Rules</div>
@@ -315,16 +329,30 @@
 
   <!-- WORKOUT PROGRAM -->
   <div class="tabpanel" id="tab-workoutprogram">
-    <div class="alert">Built around your left knee — every movement below either avoids deep knee flexion or has a knee-safe substitution called out. Stop and reassess (don't push through) if anything loads the knee wrong. Worth clearing with a doctor/PT before you start, given your size and the existing knee issue.</div>
+    <div class="alert">Built around your left knee — every movement below either avoids deep knee flexion or has a knee-safe substitution called out. Stop and reassess (don't push through) if anything loads the knee wrong. Worth clearing with a doctor/PT before you start, given your size, the existing knee issue, and how aggressive the 6-month goal is.</div>
 
-    <div class="section-title">Equipment &amp; Weekly Structure</div>
+    <div class="section-title">Equipment &amp; Weekly Structure — 3 Modalities + Your Existing Cardio</div>
     <div class="grid cols-4">
       <div class="card"><h3>Bells You Own</h3><div class="big">35 / 55 / 70 <small>lb</small></div></div>
       <div class="card"><h3>Training Slot</h3><div class="big">4–5 AM</div><div class="delta muted">Daily, per your schedule</div></div>
-      <div class="card"><h3>KB Strength Days</h3><div class="big">3x <small>/week</small></div><div class="delta muted">Mon / Wed / Fri</div></div>
-      <div class="card"><h3>Active Recovery</h3><div class="big">2–3x <small>/week</small></div><div class="delta muted">Walking, cycling, or pickleball (already in your Training tab)</div></div>
+      <div class="card"><h3>Structured Days</h3><div class="big">5x <small>/week</small></div><div class="delta muted">3 kettlebell + 2 calisthenics</div></div>
+      <div class="card"><h3>Tai Chi</h3><div class="big">Daily <small>+ 1 longer</small></div><div class="delta muted">10 min warm-up every session, 20 min Sunday</div></div>
     </div>
-    <div class="footnote">Tue/Thu: easy walk or bike, whatever's already logged in Training. Sat: pickleball if you're playing, otherwise optional light session. Sun: full rest.</div>
+    <div class="card" style="margin-top:12px;">
+      <table>
+        <thead><tr><th>Day</th><th>4–5 AM Slot</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Monday</td><td>Tai Chi warm-up + Kettlebell Day A (Hinge &amp; Press)</td><td></td></tr>
+          <tr><td>Tuesday</td><td>Tai Chi warm-up + Calisthenics Circuit 1</td><td></td></tr>
+          <tr><td>Wednesday</td><td>Tai Chi warm-up + Kettlebell Day B (Swing &amp; Pull)</td><td></td></tr>
+          <tr><td>Thursday</td><td>Tai Chi warm-up + Calisthenics Circuit 2</td><td></td></tr>
+          <tr><td>Friday</td><td>Tai Chi warm-up + Kettlebell Day C (Full Body)</td><td></td></tr>
+          <tr><td>Saturday</td><td>Pickleball, or a walk/bike ride</td><td>Whatever you're already logging in Training — keep doing it, it counts toward the weekly score.</td></tr>
+          <tr><td>Sunday</td><td>Tai Chi (20 min) only</td><td>Full rest from loaded training. This is recovery day, not an off day — the tai chi session is the point.</td></tr>
+        </tbody>
+      </table>
+      <div class="footnote">Walks and bike rides fit in anywhere else you've got the time — they're not scheduled against the 4–5am slot and they still count.</div>
+    </div>
 
     <div class="section-title">Knee-Safe Movement Substitutions</div>
     <div class="card">
@@ -333,28 +361,35 @@
         <tbody>
           <tr><td>Lunges / split squats</td><td>Single-leg RDL (Romanian deadlift)</td><td>Hip-hinge dominant, minimal knee flexion, still trains the same posterior chain.</td></tr>
           <tr><td>Deep goblet squat</td><td>Box/bench squat — sit to a box at or above knee height, don't chase depth</td><td>Caps how far the knee has to bend; still loads the legs hard.</td></tr>
-          <tr><td>Jump/plyo work, box jumps</td><td>Swings and carries for conditioning instead</td><td>Zero impact loading on the joint.</td></tr>
+          <tr><td>Jump/plyo work, box jumps, running</td><td>Swings, carries, and low-impact step-outs for conditioning instead</td><td>Zero impact loading on the joint.</td></tr>
           <tr><td>Full Turkish Get-Up</td><td>Half Get-Up (to elbow, skip the low lunge step)</td><td>Cuts the one position in the TGU that puts the knee in a deep, loaded bend.</td></tr>
+          <tr><td>Mountain climbers / high-knee drills</td><td>Slow, controlled version or standing knee raises holding a wall</td><td>Removes the repetitive impact/torque a fast tempo puts through the knee.</td></tr>
+          <tr><td>Burpees</td><td>Squat-to-box + push-up, done as two separate controlled reps</td><td>Same muscles, no jump-down landing force on the knee.</td></tr>
         </tbody>
       </table>
     </div>
 
-    <div class="section-title">The Program — 12 Weeks, 3 Phases</div>
-    <div class="grid cols-3">
+    <div class="section-title">The Program — 26 Weeks to Match the 6-Month Goal</div>
+    <div class="grid cols-4">
       <div class="card">
-        <h3>Phase 1 — Weeks 1–4</h3>
+        <h3>Phase 1 — Wks 1–4</h3>
         <p style="margin-top:0; font-weight:600;">Technique &amp; Base</p>
-        <p class="footnote" style="margin:0;">Lighter bells, higher reps, groove the patterns before loading up. Mostly 35/55 lb.</p>
+        <p class="footnote" style="margin:0;">Lighter bells, higher reps, groove the patterns. Mostly 35/55 lb. Calisthenics: fewer rounds, focus on form.</p>
       </div>
       <div class="card">
-        <h3>Phase 2 — Weeks 5–8</h3>
+        <h3>Phase 2 — Wks 5–8</h3>
         <p style="margin-top:0; font-weight:600;">Strength Build</p>
-        <p class="footnote" style="margin:0;">Same movements, heavier bells (55/70 lb), lower reps on the main lifts.</p>
+        <p class="footnote" style="margin:0;">Heavier bells (55/70 lb), lower reps on mains. Calisthenics: add a round.</p>
       </div>
       <div class="card">
-        <h3>Phase 3 — Weeks 9–12</h3>
+        <h3>Phase 3 — Wks 9–12</h3>
         <p style="margin-top:0; font-weight:600;">Conditioning</p>
-        <p class="footnote" style="margin:0;">Add swing/carry complexes and shorter rest periods. Full use of the 70 lb bell.</p>
+        <p class="footnote" style="margin:0;">Complexes, shorter rest, full use of the 70 lb bell. Calisthenics: shorter rest between rounds.</p>
+      </div>
+      <div class="card">
+        <h3>Phase 4 — Wks 13–26</h3>
+        <p style="margin-top:0; font-weight:600;">Sustain &amp; Push Volume</p>
+        <p class="footnote" style="margin:0;">Repeat Phase 3 loads. Every 4 weeks: add a round to calisthenics, add 5 reps to carries, or add 5–10 min to a cardio day. This is where the deficit needs training volume to back it up.</p>
       </div>
     </div>
 
@@ -399,6 +434,50 @@
         </tbody>
       </table>
       <div class="footnote">Warm up every session with 5 min easy movement (walk, bike, or bodyweight circles) before picking up a bell — especially given the knee.</div>
+    </div>
+
+    <div class="section-title">Calisthenics Circuit 1 — Tuesday (Push/Core Emphasis)</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Exercise</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3–4</th></tr></thead>
+        <tbody>
+          <tr><td>Push-Ups (incline on a counter/table if needed)</td><td>3x8–10</td><td>4x10–12</td><td>4x12–15</td></tr>
+          <tr><td>Wall Sit</td><td>3x20s</td><td>3x30s</td><td>3x45s</td></tr>
+          <tr><td>Standing Knee Raises (holding wall/counter)</td><td>3x10/side</td><td>3x12/side</td><td>3x15/side</td></tr>
+          <tr><td>Plank</td><td>3x30s</td><td>3x40s</td><td>3x60s</td></tr>
+          <tr><td>Glute Bridge</td><td>3x12</td><td>3x15</td><td>3x20</td></tr>
+          <tr><td>Rest between rounds</td><td>90s</td><td>75s</td><td>60s</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">Calisthenics Circuit 2 — Thursday (Pull/Full-Body Emphasis)</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Exercise</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3–4</th></tr></thead>
+        <tbody>
+          <tr><td>Inverted Row (sturdy table edge, or pull-up bar if you have one)</td><td>3x6–8</td><td>3x8–10</td><td>4x10–12</td></tr>
+          <tr><td>Step-Ups (low box, controlled, no bounce)</td><td>3x8/side</td><td>3x10/side</td><td>3x12/side</td></tr>
+          <tr><td>Diamond Push-Ups (or standard if diamond is too hard on the wrists)</td><td>3x6–8</td><td>3x8–10</td><td>3x10–12</td></tr>
+          <tr><td>Slow Controlled Mountain Climbers</td><td>3x10/side</td><td>3x12/side</td><td>3x15/side</td></tr>
+          <tr><td>Calf Raises</td><td>3x15</td><td>3x20</td><td>3x25</td></tr>
+          <tr><td>Rest between rounds</td><td>90s</td><td>75s</td><td>60s</td></tr>
+        </tbody>
+      </table>
+      <div class="footnote">"Military-style" here means the circuit format and the movement selection (push-ups, rows, core, controlled lower-body work) — loads and impact are scaled down from an actual PT test to work around the knee and your current conditioning level. Progress by adding reps/rounds before adding speed.</div>
+    </div>
+
+    <div class="section-title">Tai Chi — Lymphatic Drainage &amp; Recovery</div>
+    <div class="card">
+      <p style="margin-top:0;">The point of tai chi here isn't strength — it's slow, rhythmic, low-impact movement paired with deep breathing, which helps move lymphatic fluid (your lymph system has no pump of its own; it relies on muscle contraction and movement) and shifts you out of a training-stressed state before the rest of the day starts.</p>
+      <table>
+        <thead><tr><th>When</th><th>Length</th><th>Structure</th></tr></thead>
+        <tbody>
+          <tr><td>Before every 4–5am session</td><td>~10 min</td><td>Slow weight shifts side to side, gentle arm circles/"cloud hands," a few minutes of deep belly breathing. This is your warm-up, not a separate workout.</td></tr>
+          <tr><td>Sunday</td><td>~20 min</td><td>A basic 8–form sequence (e.g. Commencement, Part the Wild Horse's Mane, White Crane Spreads Wings, Brush Knee, Repulse Monkey) done slowly, 2–3 rounds through.</td></tr>
+        </tbody>
+      </table>
+      <div class="footnote">Tai chi form is genuinely hard to learn from text — a short beginner video series or a local class will get you correct form far faster than a written description. Treat the structure above as the schedule/dosage; get the actual movements from a visual source. It's naturally knee-friendly (weight stays controlled and centered), but keep stances shallow while the knee is a concern.</div>
     </div>
   </div>
 
@@ -648,6 +727,68 @@ function renderGoal() {
   }
 
   const weightPts = w.measured_events.concat(w.estimated_events).sort((a,b)=>a.date.localeCompare(b.date));
+
+  // ---- 6-month trajectory ----
+  const goal = SUMMARY.six_month_goal;
+  if (goal) {
+    document.getElementById('goalTargetDate').textContent = goal.target_date;
+    document.getElementById('goalRequiredPace').innerHTML = `${goal.required_weekly_rate_lb} <small>lb/week</small>`;
+
+    const buildToday = new Date(SUMMARY.generated_at + 'T00:00:00');
+    const startDate = new Date(goal.start_date + 'T00:00:00');
+    const targetDate = new Date(goal.target_date + 'T00:00:00');
+    const totalDays = (targetDate - startDate) / 86400000;
+    const daysElapsed = Math.max(0, (buildToday - startDate) / 86400000);
+    const weeksLeft = Math.max(0, Math.round((totalDays - daysElapsed) / 7));
+    document.getElementById('goalWeeksLeft').textContent = weeksLeft;
+
+    const requiredAtToday = goal.start_lb - (goal.start_lb - goal.target_lb) * Math.min(daysElapsed / totalDays, 1);
+
+    // latest known weight signal: measured/estimated events or a logged check-in, whichever is most recent
+    let latestPoint = null;
+    weightPts.forEach(p => { if (!latestPoint || p.date > latestPoint.date) latestPoint = p; });
+    getCheckins().forEach(ci => { if (ci.weight && (!latestPoint || ci.date > latestPoint.date)) latestPoint = { date: ci.date, value: Number(ci.weight) }; });
+
+    const onPaceEl = document.getElementById('goalOnPace');
+    const detailEl = document.getElementById('goalOnPaceDetail');
+    if (latestPoint) {
+      const diff = requiredAtToday - latestPoint.value; // positive = lighter than required (ahead)
+      if (diff >= 0) {
+        onPaceEl.innerHTML = `<span style="color:var(--good)">On pace</span>`;
+        detailEl.textContent = `${Math.abs(diff).toFixed(1)} lb ahead of the required line as of ${latestPoint.date}`;
+      } else {
+        onPaceEl.innerHTML = `<span style="color:var(--warn)">${Math.abs(diff).toFixed(1)} lb behind</span>`;
+        detailEl.textContent = `As of ${latestPoint.date} — tighten up, not a crisis this early in a 26-week window`;
+      }
+    } else {
+      onPaceEl.textContent = '–';
+    }
+
+    const requiredLineEnd = goal.target_date;
+    const actualPts = weightPts.filter(p => p.date >= '2026-05-01');
+    const allDates = Array.from(new Set([goal.start_date, requiredLineEnd, ...actualPts.map(p => p.date)])).sort();
+    safeChart(document.getElementById('chartTrajectory'), {
+      type: 'line',
+      data: { labels: allDates, datasets: [
+        {
+          label: 'Required pace',
+          data: allDates.map(d => {
+            if (d < goal.start_date) return null;
+            const dd = (new Date(d + 'T00:00:00') - startDate) / 86400000;
+            if (dd > totalDays) return null;
+            return Math.round((goal.start_lb - (goal.start_lb - goal.target_lb) * (dd / totalDays)) * 10) / 10;
+          }),
+          borderColor: c.good, borderDash: [6, 4], pointRadius: 0, spanGaps: true,
+        },
+        {
+          label: 'Actual',
+          data: allDates.map(d => { const p = actualPts.find(pp => pp.date === d); return p ? p.value : null; }),
+          borderColor: c.accent, backgroundColor: 'transparent', pointRadius: 3, spanGaps: true,
+        }
+      ]},
+      options: baseLineOptions({ scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 10 } }, y: { grid: { color: 'rgba(255,255,255,0.06)' } } } })
+    });
+  }
   safeChart(document.getElementById('chartGoalWeight'), {
     type: 'line',
     data: { labels: weightPts.map(p => p.date), datasets: [
@@ -694,10 +835,32 @@ function estimateMaintenanceCalories() {
 }
 function renderNutritionTargets() {
   const maint = estimateMaintenanceCalories();
-  const target = maint - 750; // ~1.5lb/week deficit
+  const goal = SUMMARY.six_month_goal;
+  // Deficit needed to hit the stated 300->240 in 6 months pace (~3,500 kcal/lb), capped at a
+  // safety ceiling so the plan never prescribes an unreasonably low intake regardless of the math.
+  const neededDailyDeficit = goal ? Math.round(goal.required_weekly_rate_lb * 3500 / 7) : 750;
+  const cappedDeficit = Math.min(neededDailyDeficit, 1000);
+  const target = Math.max(maint - cappedDeficit, 1600); // hard floor
   document.getElementById('targetCalories').innerHTML = `${target} <small>kcal</small>`;
-  const proteinTarget = Math.round(SUMMARY.weight.last_estimated_from_bmi.value * 0.8);
+  // Protein target = 1g per lb of GOAL weight (240 lb), not current weight -- stays fixed for the
+  // whole program rather than drifting down as the scale does, so it never becomes the thing that slips.
+  const goalWeightLb = (goal && goal.target_lb) || SUMMARY.weight.goal_target_lb || 240;
+  const proteinTarget = Math.round(goalWeightLb * 1.0 / 5) * 5;
   document.getElementById('targetProtein').innerHTML = `${proteinTarget} <small>g</small>`;
+  const fatTarget = Math.max(Math.round((target - proteinTarget * 4 - 40 * 4) / 9 / 5) * 5, 0); // remainder after protein + ~40g carb
+  const mpCal = document.getElementById('mpCalories');
+  if (mpCal) mpCal.innerHTML = `~${target} <small>kcal/day</small>`;
+  const mpProt = document.getElementById('mpProtein');
+  if (mpProt) mpProt.innerHTML = `~${proteinTarget} <small>g/day</small>`;
+  const mpFat = document.getElementById('mpFat');
+  if (mpFat) mpFat.innerHTML = `~${fatTarget} <small>g/day</small>`;
+  const paceEl = document.getElementById('paceNote');
+  if (paceEl && goal) {
+    const shortfall = neededDailyDeficit - cappedDeficit;
+    paceEl.textContent = shortfall > 0
+      ? `The literal math for 2.3 lb/week needs a ~${neededDailyDeficit} kcal/day deficit -- capped here at ${cappedDeficit} kcal/day for sustainability. Expect faster loss in the first 4-8 weeks (water/glycogen) and to lean harder on training volume in later months to stay on pace.`
+      : `This deficit lines up with the pace needed for 240 lb in ${goal.weeks_total} weeks (~${goal.required_weekly_rate_lb} lb/week average).`;
+  }
 }
 
 function renderNutritionChart() {

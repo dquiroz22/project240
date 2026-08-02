@@ -1,107 +1,107 @@
 {
-  "generated_at": "2026-07-27",
+  "generated_at": "2026-08-02",
   "date_range": {
     "start": "2016-05-21",
-    "end": "2026-07-27"
+    "end": "2026-08-02"
   },
   "height_in": 80.00004,
   "metric_period_averages": {
     "steps": {
       "d7": {
-        "avg": 3209.3,
-        "n": 6
+        "avg": 5858.1,
+        "n": 7
       },
       "d30": {
-        "avg": 5616.2,
-        "n": 29
+        "avg": 5658.3,
+        "n": 30
       },
       "d90": {
-        "avg": 5027.9,
-        "n": 89
+        "avg": 5029.3,
+        "n": 90
       }
     },
     "sleep_hours": {
       "d7": {
-        "avg": null,
-        "n": 0
+        "avg": 7.3,
+        "n": 7
       },
       "d30": {
-        "avg": 7.3,
-        "n": 22
+        "avg": 7.4,
+        "n": 24
       },
       "d90": {
-        "avg": 7.3,
-        "n": 44
+        "avg": 7.2,
+        "n": 49
       }
     },
     "resting_hr": {
       "d7": {
-        "avg": null,
-        "n": 0
+        "avg": 64.1,
+        "n": 7
       },
       "d30": {
         "avg": 60.0,
-        "n": 22
+        "n": 24
       },
       "d90": {
-        "avg": 61.6,
-        "n": 44
+        "avg": 62.0,
+        "n": 49
       }
     },
     "spo2_avg_pct": {
       "d7": {
-        "avg": null,
-        "n": 0
+        "avg": 96.5,
+        "n": 7
       },
       "d30": {
-        "avg": 96.2,
-        "n": 23
+        "avg": 96.3,
+        "n": 25
       },
       "d90": {
         "avg": 96.4,
-        "n": 70
+        "n": 73
       }
     },
     "glucose_avg": {
       "d7": {
-        "avg": 128.6,
-        "n": 7
+        "avg": 124.1,
+        "n": 3
       },
       "d30": {
-        "avg": 118.6,
-        "n": 19
+        "avg": 118.3,
+        "n": 21
       },
       "d90": {
-        "avg": 118.6,
-        "n": 19
+        "avg": 118.3,
+        "n": 21
       }
     },
     "active_energy_kcal": {
       "d7": {
-        "avg": 152.7,
-        "n": 6
+        "avg": null,
+        "n": 0
       },
       "d30": {
-        "avg": 396.9,
-        "n": 29
+        "avg": 387.0,
+        "n": 22
       },
       "d90": {
-        "avg": 326.0,
-        "n": 89
+        "avg": 325.3,
+        "n": 82
       }
     },
     "distance_mi": {
       "d7": {
-        "avg": 1.4,
-        "n": 6
+        "avg": 4.3,
+        "n": 7
       },
       "d30": {
-        "avg": 3.2,
-        "n": 29
+        "avg": 3.4,
+        "n": 30
       },
       "d90": {
-        "avg": 2.7,
-        "n": 89
+        "avg": 2.8,
+        "n": 90
       }
     },
     "water_floz": {
@@ -133,13 +133,13 @@
       "type": "measured"
     },
     "last_measured": {
-      "date": "2024-06-23",
-      "value": 280.0,
+      "date": "2026-08-02",
+      "value": 311.3,
       "type": "measured"
     },
     "last_estimated_from_bmi": {
-      "date": "2026-07-13",
-      "value": 304.1,
+      "date": "2026-08-02",
+      "value": 315.0,
       "type": "estimated_from_bmi"
     },
     "measured_events": [
@@ -1067,6 +1067,16 @@
         "date": "2024-06-23",
         "value": 280.0,
         "type": "measured"
+      },
+      {
+        "date": "2026-07-27",
+        "value": 311.7,
+        "type": "measured"
+      },
+      {
+        "date": "2026-08-02",
+        "value": 311.3,
+        "type": "measured"
       }
     ],
     "bmi_events": [
@@ -1209,6 +1219,14 @@
       {
         "date": "2026-07-13",
         "value": 33.4
+      },
+      {
+        "date": "2026-07-27",
+        "value": 34.6
+      },
+      {
+        "date": "2026-08-02",
+        "value": 34.6
       }
     ],
     "body_fat_events": [
@@ -1351,6 +1369,14 @@
       {
         "date": "2026-07-13",
         "value": 21.8
+      },
+      {
+        "date": "2026-07-27",
+        "value": 23.2
+      },
+      {
+        "date": "2026-08-02",
+        "value": 23.9
       }
     ],
     "estimated_events": [
@@ -1528,10 +1554,29 @@
         "date": "2026-07-13",
         "value": 304.1,
         "type": "estimated_from_bmi"
+      },
+      {
+        "date": "2026-07-27",
+        "value": 315.0,
+        "type": "estimated_from_bmi"
+      },
+      {
+        "date": "2026-08-02",
+        "value": 315.0,
+        "type": "estimated_from_bmi"
       }
     ],
     "goal_start_lb": 300,
     "goal_target_lb": 240
+  },
+  "six_month_goal": {
+    "start_date": "2026-08-02",
+    "target_date": "2027-01-31",
+    "start_lb": 300.0,
+    "target_lb": 240.0,
+    "total_lb_to_lose": 60.0,
+    "weeks_total": 26,
+    "required_weekly_rate_lb": 2.31
   },
   "workouts": {
     "all_time_count": 1048,
@@ -1579,26 +1624,23 @@
       }
     },
     "last_90_days": {
-      "count": 11,
-      "total_minutes": 734.0,
-      "weekly_avg_minutes": 57.1,
-      "weekly_avg_sessions": 0.86
+      "count": 10,
+      "total_minutes": 653.3,
+      "weekly_avg_minutes": 50.8,
+      "weekly_avg_sessions": 0.78
     },
     "last_30_days": {
-      "count": 8,
-      "total_minutes": 537.7
+      "count": 6,
+      "total_minutes": 407.2
     }
   },
-  "sleep_days_with_data_last_30": 22,
+  "sleep_days_with_data_last_30": 24,
   "data_notes": {
-    "garmin_connect_step_data_ends": "2026-07-19",
-    "phone_step_data_continues_to": "2026-07-27",
-    "step_methodology": "Daily step total = max of same-day totals across sources (Garmin Connect vs iPhone) to avoid double-counting overlapping trackers. Days after Garmin sync stopped rely on phone-only counts, which may undercount true activity.",
-    "weight_gap": "No direct scale weighing between 2024-06-23 and the start of Hume BMI-based tracking; recent weight is a BMI-derived estimate, not a direct scale reading.",
+    "step_methodology": "Daily step total = max of same-day totals across sources (e.g. Garmin vs iPhone) to avoid double-counting overlapping trackers.",
+    "weight_gap": "Weight is a direct scale reading when available; otherwise a BMI-derived estimate, clearly flagged as such.",
     "excluded_outliers": [
       "2024-01-03"
     ],
-    "blood_pressure": "Only one BP reading exists in the entire export (2024-11-18); not a discontinued series, just a single data point.",
-    "hrv": "No HRV records found in this export."
+    "hrv": "No HRV records found in the Apple Health export as of the last parse."
   }
 }
