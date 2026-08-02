@@ -79,6 +79,10 @@
   .macroline b { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 2px; }
   .macroline .mstat.good { color: var(--good); font-weight: 600; }
   .macroline .mstat.bad { color: var(--bad); font-weight: 600; }
+  .donebox { font-size: 11.5px; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .donebox .done { color: var(--good); font-weight: 600; }
+  .donebox .notdone { color: var(--muted); }
+  .donebox .upcoming { color: var(--muted); font-style: italic; }
   .card {
     background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
     padding: 18px;
@@ -291,7 +295,7 @@
       <button class="btn secondary" id="mpWeekToggle" style="padding:6px 12px; font-size:12px;">Preview Next Week</button>
     </div>
     <div class="grid cols-7" id="mealWeekCalendar"></div>
-    <div class="footnote">Meal 1 is batch-cooked once and repeats all week — less decision-making during the harder-to-plan midday window. Meal 2 rotates through five different proteins across the week instead of just alternating two, so dinner doesn't get monotonous.</div>
+    <div class="footnote">Meal 1 is batch-cooked once and repeats all week — less decision-making during the harder-to-plan midday window. Meal 2 rotates through five different proteins across the week instead of just alternating two, so dinner doesn't get monotonous. The "Meal plan followed" line on each card reflects a <code>meal_followed</code> column in your check-in Sheet — log Y/N there daily to see it update here and feed the 30-Day Health Score.</div>
 
     <div class="section-title">Ground Rules</div>
     <div class="card">
@@ -378,7 +382,7 @@
       </div>
     </div>
     <div class="grid cols-7" id="workoutWeekCalendar"></div>
-    <div class="footnote">Sets/reps shown are for your current program phase, updated automatically as you move through the 26 weeks. Full phase-by-phase breakdown is below for reference.</div>
+    <div class="footnote">Sets/reps shown are for your current program phase, updated automatically as you move through the 26 weeks. Full phase-by-phase breakdown is below for reference. The "Workout completed" line on each card reflects a <code>workout_completed</code> column in your check-in Sheet — log Y/N there daily to see it update here and feed the 30-Day Health Score.</div>
 
     <div class="section-title">Equipment &amp; Weekly Structure — 3 Modalities + Your Existing Cardio</div>
     <div class="grid cols-4">
@@ -602,7 +606,7 @@
     <div class="card">
       <p class="footnote" style="margin-top:0;">Synced from <a href="{{SHEET_URL}}" target="_blank" style="color:var(--accent)">the Google Sheet</a> as of the last dashboard rebuild.</p>
       <table id="logTable">
-        <thead><tr><th>Date</th><th>Weight</th><th>Waist</th><th>BP</th><th>Cal</th><th>Protein</th><th>Water</th><th>Alcohol</th><th>Strength</th><th>Notes</th></tr></thead>
+        <thead><tr><th>Date</th><th>Weight</th><th>Waist</th><th>BP</th><th>Cal</th><th>Protein</th><th>Water</th><th>Alcohol</th><th>Strength</th><th>Meal Plan</th><th>Workout</th><th>Notes</th></tr></thead>
         <tbody></tbody>
       </table>
       <div class="btn-row">
@@ -711,21 +715,29 @@ function renderOverview() {
   document.getElementById('overviewCards').innerHTML = cards.map(([t,v,d]) =>
     `<div class="card"><h3>${t}</h3><div class="big">${v}</div><div class="delta muted">${d}</div></div>`).join('');
 
-  // weekly score (simple composite from available recent data, transparent formula)
+  // 30-Day Health Score: 5 components, 20 pts each, all evaluated over the same 30-day window.
+  // A component with no data available is excluded from the score entirely (not counted as a
+  // miss) -- missing data isn't the same as failing the target.
   let score = 0, maxScore = 0, parts = [];
   function scoreComponent(label, ok, weight) {
+    if (ok === null || ok === undefined) { parts.push(`? ${label} (no data)`); return; }
     maxScore += weight;
     if (ok === true) { score += weight; parts.push(`✓ ${label}`); }
-    else if (ok === false) { parts.push(`— ${label}`); }
+    else { parts.push(`— ${label}`); }
   }
   const s30 = m.sleep_hours.d30.avg, r30 = m.resting_hr.d30.avg, g30 = m.glucose_avg.d30.avg, st30 = m.steps.d30.avg;
-  scoreComponent('Sleep ≥ 7h (30d avg)', s30 !== null ? s30 >= 7 : null, 25);
-  scoreComponent('Glucose avg in 70–140', g30 !== null ? (g30 >= 70 && g30 <= 140) : null, 25);
-  scoreComponent('Steps ≥ 7,000/day (30d avg)', st30 !== null ? st30 >= 7000 : null, 25);
-  scoreComponent('Trained ≥ 3x in last 7 days', true, 0); // placeholder, recalculated below
-  const last7workouts = WORKOUTS.filter(w => w.date >= daysAgoStr(7)).length;
-  parts.pop();
-  scoreComponent('Trained ≥ 3x in last 7 days', last7workouts >= 3, 25);
+  scoreComponent('Sleep ≥ 7h (30d avg)', s30 !== null ? s30 >= 7 : null, 20);
+  scoreComponent('Glucose avg in 70–140 (30d avg)', g30 !== null ? (g30 >= 70 && g30 <= 140) : null, 20);
+  scoreComponent('Steps ≥ 7,000/day (30d avg)', st30 !== null ? st30 >= 7000 : null, 20);
+
+  const checkins30 = getCheckins().filter(r => r.date >= daysAgoStr(30));
+  const workoutLoggedDays = checkins30.filter(r => r.workout_completed !== undefined && r.workout_completed !== '');
+  const mealLoggedDays = checkins30.filter(r => r.meal_followed !== undefined && r.meal_followed !== '');
+  const workoutDoneCount = workoutLoggedDays.filter(r => truthyCheck(r.workout_completed)).length;
+  const mealFollowedCount = mealLoggedDays.filter(r => truthyCheck(r.meal_followed)).length;
+  scoreComponent('Workout completed ≥ 20 of last 30 days', workoutLoggedDays.length ? workoutDoneCount >= 20 : null, 20);
+  scoreComponent('Meal plan followed ≥ 24 of last 30 days', mealLoggedDays.length ? mealFollowedCount >= 24 : null, 20);
+
   const pct = maxScore ? Math.round(100 * score / maxScore) : 0;
   document.getElementById('headerScore').innerHTML = `30-Day Health Score: <b style="color:${pct>=70?c.good:pct>=40?c.warn:c.bad}">${pct}%</b>`;
 
@@ -984,6 +996,13 @@ function renderMealCalendar() {
     } else {
       macroBlock = `<div class="macroline"><b>Day Total</b>Meal 2 is a flex/leftover meal — log actual protein/calories in your check-in to see how the day landed.</div>`;
     }
+    const isFuture = mealWeekOffset > 0 || dateStr > todayStr;
+    const ci = checkinForDate(dateStr);
+    const doneBlock = isFuture
+      ? `<div class="donebox"><span class="upcoming">Upcoming — not logged yet</span></div>`
+      : (ci && truthyCheck(ci.meal_followed)
+          ? `<div class="donebox"><span class="done">✓ Meal plan followed</span></div>`
+          : `<div class="donebox"><span class="notdone">— Not logged in check-in Sheet</span></div>`);
     return `<div class="card daycard${isToday ? ' today-card' : ''}">
       <div class="dayname">${d.day}${isToday ? ' <span class="muted">(today)</span>' : ''}</div>
       <div class="daydate">${monthDay(date)}</div>
@@ -992,6 +1011,7 @@ function renderMealCalendar() {
       <div class="mealrow"><b>Meal 2 · by 6PM</b>${d.dinner}</div>
       ${d.prep ? '<p class="daynote">Batch-cook next week\'s beef, egg muffins, and chicken this afternoon. Buy salmon + steak fresh mid-week.</p>' : ''}
       ${macroBlock}
+      ${doneBlock}
     </div>`;
   }).join('');
   const container = document.getElementById('mealWeekCalendar');
@@ -1158,12 +1178,20 @@ function renderWorkoutCalendar() {
       ? `<ul>${exercises.map(e => `<li>${e.name}: ${e[phaseKey]}</li>`).join('')}</ul>`
       : `<p class="daynote">${d.note}</p>`;
     const taichi = d.day === 'Sunday' ? '' : '<p class="daynote">+ 10-min tai chi warm-up</p>';
+    const isFuture = workoutWeekOffset > 0 || dateStr > todayStr;
+    const ci = checkinForDate(dateStr);
+    const doneBlock = isFuture
+      ? `<div class="donebox"><span class="upcoming">Upcoming — not logged yet</span></div>`
+      : (ci && truthyCheck(ci.workout_completed)
+          ? `<div class="donebox"><span class="done">✓ Workout completed</span></div>`
+          : `<div class="donebox"><span class="notdone">— Not logged in check-in Sheet</span></div>`);
     return `<div class="card daycard${isToday ? ' today-card' : ''}">
       <div class="dayname">${d.day}${isToday ? ' <span class="muted">(today)</span>' : ''}</div>
       <div class="daydate">${monthDay(date)}</div>
       <span class="daybadge ${d.badge}">${d.badge === 'kb' ? 'Kettlebell' : d.badge === 'cal' ? 'Calisthenics' : d.badge === 'cardio' ? 'Cardio' : 'Recovery'}</span>
       <div style="font-size:12px; font-weight:600;">${d.type}</div>
       ${list}${taichi}
+      ${doneBlock}
     </div>`;
   }).join('');
   const container = document.getElementById('workoutWeekCalendar');
@@ -1303,9 +1331,17 @@ function renderHistoryChart() {
 // There is no live write-back from this static file to the Sheet -- log entries directly
 // in the Sheet (link above), then ask Claude to rebuild this dashboard to pull them in.
 function getCheckins() { return CHECKINS || []; }
+function truthyCheck(v) {
+  if (v === null || v === undefined || v === '') return false;
+  const s = String(v).trim().toUpperCase();
+  return s === 'Y' || s === 'YES' || s === 'TRUE' || s === '1' || s === '✓';
+}
+function checkinForDate(dateStr) {
+  return getCheckins().find(r => r.date === dateStr) || null;
+}
 function exportCheckins() {
   const arr = getCheckins().slice().sort((a,b)=>a.date.localeCompare(b.date));
-  const headers = ['date','weight','waist','bp','calories','protein','water','alcohol','strength','notes'];
+  const headers = ['date','weight','waist','bp','calories','protein','water','alcohol','strength','meal_followed','workout_completed','notes'];
   let csv = headers.join(',') + '\n';
   arr.forEach(r => { csv += headers.map(h => `"${(r[h]||'').toString().replace(/"/g,'""')}"`).join(',') + '\n'; });
   const blob = new Blob([csv], {type:'text/csv'});
@@ -1320,8 +1356,9 @@ function renderLog() {
     <tr>
       <td>${r.date}</td><td>${r.weight||''}</td><td>${r.waist||''}</td><td>${r.bp||''}</td>
       <td>${r.calories||''}</td><td>${r.protein||''}</td><td>${r.water||''}</td><td>${r.alcohol||''}</td>
-      <td>${r.strength||''}</td><td>${r.notes||''}</td>
-    </tr>`).join('') || '<tr><td colspan="10" class="muted">No check-ins in the Sheet yet — <a href="'+SHEET_URL+'" target="_blank" style="color:var(--accent)">open it</a> and add today\'s.</td></tr>';
+      <td>${r.strength||''}</td><td>${truthyCheck(r.meal_followed)?'✓':(r.meal_followed||'')}</td>
+      <td>${truthyCheck(r.workout_completed)?'✓':(r.workout_completed||'')}</td><td>${r.notes||''}</td>
+    </tr>`).join('') || '<tr><td colspan="12" class="muted">No check-ins in the Sheet yet — <a href="'+SHEET_URL+'" target="_blank" style="color:var(--accent)">open it</a> and add today\'s.</td></tr>';
   const linkBtn = document.getElementById('sheetLinkBtn');
   if (linkBtn) linkBtn.href = SHEET_URL;
 }
