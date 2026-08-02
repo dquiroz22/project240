@@ -160,7 +160,7 @@
     <div class="grid cols-4">
       <div class="card">
         <h3>Starting Point</h3>
-        <div class="big">300 <small>lb</small></div>
+        <div class="big" id="goalStartWeight">–</div>
         <div class="delta muted">Program baseline</div>
       </div>
       <div class="card">
@@ -182,7 +182,7 @@
 
     <div id="goalAlert"></div>
 
-    <div class="section-title">6-Month Trajectory — 300 → 240 by <span id="goalTargetDate">–</span></div>
+    <div class="section-title">6-Month Trajectory — <span id="goalStartLabel">–</span> → 240 by <span id="goalTargetDate">–</span></div>
     <div class="grid cols-3">
       <div class="card"><h3>Required Pace</h3><div class="big" id="goalRequiredPace">–</div><div class="delta muted">Average needed for the full 6 months</div></div>
       <div class="card"><h3>On Pace?</h3><div class="big" id="goalOnPace">–</div><div class="delta muted" id="goalOnPaceDetail"></div></div>
@@ -713,7 +713,11 @@ function renderGoal() {
   document.getElementById('goalCurrent').innerHTML = `${current.value} <small>lb (est.)</small>`;
   document.getElementById('goalCurrentSource').textContent = `From Hume BMI, ${current.date}`;
 
-  const startWeight = 300, target = 240;
+  const goalForStart = SUMMARY.six_month_goal;
+  const startWeight = (goalForStart && goalForStart.start_lb) || 300;
+  const target = (goalForStart && goalForStart.target_lb) || 240;
+  document.getElementById('goalStartWeight').innerHTML = `${startWeight} <small>lb</small>`;
+  document.getElementById('goalStartLabel').textContent = startWeight;
   const progressLb = startWeight - current.value;
   const totalNeeded = startWeight - target;
   const pct = Math.round(100 * progressLb / totalNeeded);
@@ -723,7 +727,7 @@ function renderGoal() {
     : `${(current.value - target).toFixed(1)} lb to go`;
 
   if (current.value >= startWeight) {
-    document.getElementById('goalAlert').innerHTML = `<div class="alert bad">Current estimate (${current.value} lb) is at or above the 300 lb starting point. The last confirmed scale reading (${w.last_measured.value} lb, ${w.last_measured.date}) was lower — worth a real weigh-in to confirm where things actually stand before trusting the BMI estimate.</div>`;
+    document.getElementById('goalAlert').innerHTML = `<div class="alert bad">Current estimate (${current.value} lb) is at or above the ${startWeight} lb starting point. The last confirmed scale reading (${w.last_measured.value} lb, ${w.last_measured.date}) was lower — worth a real weigh-in to confirm where things actually stand before trusting the BMI estimate.</div>`;
   }
 
   const weightPts = w.measured_events.concat(w.estimated_events).sort((a,b)=>a.date.localeCompare(b.date));

@@ -1566,17 +1566,17 @@
         "type": "estimated_from_bmi"
       }
     ],
-    "goal_start_lb": 300,
-    "goal_target_lb": 240
+    "goal_start_lb": 311.3,
+    "goal_target_lb": 240.0
   },
   "six_month_goal": {
     "start_date": "2026-08-02",
     "target_date": "2027-01-31",
-    "start_lb": 300.0,
+    "start_lb": 311.3,
     "target_lb": 240.0,
-    "total_lb_to_lose": 60.0,
+    "total_lb_to_lose": 71.3,
     "weeks_total": 26,
-    "required_weekly_rate_lb": 2.31
+    "required_weekly_rate_lb": 2.74
   },
   "workouts": {
     "all_time_count": 1048,

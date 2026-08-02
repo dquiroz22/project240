@@ -105,13 +105,18 @@ def main():
     sleep_days_30 = sum(1 for i in range(30)
                          if rows_by_date.get((TODAY - timedelta(days=i)).strftime("%Y-%m-%d"), {}).get("sleep_hours"))
 
-    # ---- 6-month goal trajectory (300 -> 240 lb) ----
-    # Clock starts the day this goal was set (build reference date), not historical data --
-    # we don't retroactively invent progress against a target that didn't exist yet.
+    # ---- 6-month goal trajectory (311.3 -> 240 lb) ----
+    # Fixed anchor -- the day the goal was actually set, NOT "today". This must stay a constant:
+    # rebuilds now run daily (Health Auto Export auto-refresh), so if this were TODAY it would
+    # silently re-anchor a fresh 26-week countdown on every single rebuild and the deadline would
+    # never actually get closer. Update GOAL_START_DATE/goal_start_lb by hand only if Doug
+    # explicitly resets the goal (as he did on 2026-08-02, correcting the anchor weight to his
+    # actual last scale reading of 311.3 lb instead of the round 300 first used).
     GOAL_WEEKS = 26
-    goal_start_date = TODAY
-    goal_target_date = TODAY + timedelta(weeks=GOAL_WEEKS)
-    goal_start_lb = 300.0
+    GOAL_START_DATE = "2026-08-02"
+    goal_start_date = datetime.strptime(GOAL_START_DATE, "%Y-%m-%d")
+    goal_target_date = goal_start_date + timedelta(weeks=GOAL_WEEKS)
+    goal_start_lb = 311.3
     goal_target_lb = 240.0
     total_to_lose = goal_start_lb - goal_target_lb
     six_month_goal = {
@@ -142,7 +147,7 @@ def main():
             "last_estimated_from_bmi": last_estimated,
             "measured_events": weight_events, "bmi_events": bmi_events,
             "body_fat_events": bf_events, "estimated_events": estimated_weight_events,
-            "goal_start_lb": 300, "goal_target_lb": 240,
+            "goal_start_lb": goal_start_lb, "goal_target_lb": goal_target_lb,
         },
         "six_month_goal": six_month_goal,
         "workouts": workout_summary,
