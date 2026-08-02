@@ -50,9 +50,31 @@
   .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
   .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
   .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid.cols-7 { grid-template-columns: repeat(7, 1fr); }
   @media (max-width: 900px) {
     .grid.cols-2, .grid.cols-3, .grid.cols-4 { grid-template-columns: 1fr 1fr; }
+    .grid.cols-7 { grid-template-columns: 1fr 1fr; }
   }
+  @media (max-width: 560px) {
+    .grid.cols-2, .grid.cols-3, .grid.cols-4, .grid.cols-7 { grid-template-columns: 1fr; }
+  }
+  .daycard { display: flex; flex-direction: column; gap: 8px; }
+  .daycard .dayname { font-size: 13px; font-weight: 700; }
+  .daycard .daydate { font-size: 11px; color: var(--muted); margin-top: -6px; }
+  .daycard .daybadge {
+    display: inline-block; align-self: flex-start; padding: 2px 9px; border-radius: 99px;
+    font-size: 11px; font-weight: 600; margin-bottom: 2px;
+  }
+  .daycard .daybadge.kb { background: rgba(79,141,253,0.15); color: var(--accent); }
+  .daycard .daybadge.cal { background: rgba(167,139,250,0.15); color: var(--purple); }
+  .daycard .daybadge.cardio { background: rgba(52,211,153,0.15); color: var(--good); }
+  .daycard .daybadge.rest { background: rgba(139,149,171,0.15); color: var(--muted); }
+  .daycard .daybadge.prep { background: rgba(251,191,36,0.15); color: var(--warn); }
+  .daycard ul { margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.6; }
+  .daycard .daynote { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin: 0; }
+  .daycard .mealrow { font-size: 12px; line-height: 1.5; }
+  .daycard .mealrow b { color: var(--muted); font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: .03em; display: block; }
+  .today-card { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .card {
     background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
     padding: 18px;
@@ -253,6 +275,10 @@
       <p class="footnote" id="paceNote" style="margin:0;">–</p>
     </div>
 
+    <div class="section-title">This Week's Meals</div>
+    <div class="grid cols-7" id="mealWeekCalendar"></div>
+    <div class="footnote">Breakfast, lunch, and snacks are batch-cooked once and repeat all week — that's the point, less decision-making. Dinner rotates between your two Sunday-prepped proteins so it's not the exact same plate seven nights running.</div>
+
     <div class="section-title">Ground Rules</div>
     <div class="card">
       <p style="margin-top:0;"><b>Eat freely:</b> beef, pork, chicken (esp. thighs — cheaper, more fat, harder to overcook), eggs, bacon, full-fat cheese, butter, olive oil, avocado oil, heavy cream. Protein and fat are both on your side here.</p>
@@ -330,6 +356,13 @@
   <!-- WORKOUT PROGRAM -->
   <div class="tabpanel" id="tab-workoutprogram">
     <div class="alert">Built around your left knee — every movement below either avoids deep knee flexion or has a knee-safe substitution called out. Stop and reassess (don't push through) if anything loads the knee wrong. Worth clearing with a doctor/PT before you start, given your size, the existing knee issue, and how aggressive the 6-month goal is.</div>
+
+    <div class="flex-between" style="margin-bottom:4px;">
+      <div class="section-title" style="margin:0;">This Week's Schedule</div>
+      <div class="muted" style="font-size:12px;" id="wpPhaseLabel">–</div>
+    </div>
+    <div class="grid cols-7" id="workoutWeekCalendar"></div>
+    <div class="footnote">Sets/reps shown are for your current program phase, updated automatically as you move through the 26 weeks. Full phase-by-phase breakdown is below for reference.</div>
 
     <div class="section-title">Equipment &amp; Weekly Structure — 3 Modalities + Your Existing Cardio</div>
     <div class="grid cols-4">
@@ -2507,9 +2540,52 @@ function renderNutritionTargets() {
   if (paceEl && goal) {
     const shortfall = neededDailyDeficit - cappedDeficit;
     paceEl.textContent = shortfall > 0
-      ? `The literal math for 2.3 lb/week needs a ~${neededDailyDeficit} kcal/day deficit -- capped here at ${cappedDeficit} kcal/day for sustainability. Expect faster loss in the first 4-8 weeks (water/glycogen) and to lean harder on training volume in later months to stay on pace.`
+      ? `The literal math for ${goal.required_weekly_rate_lb} lb/week needs a ~${neededDailyDeficit} kcal/day deficit -- capped here at ${cappedDeficit} kcal/day for sustainability. Expect faster loss in the first 4-8 weeks (water/glycogen) and to lean harder on training volume in later months to stay on pace.`
       : `This deficit lines up with the pace needed for 240 lb in ${goal.weeks_total} weeks (~${goal.required_weekly_rate_lb} lb/week average).`;
   }
+}
+
+// ============ MEAL PLAN WEEKLY CALENDAR ============
+const BREAKFAST = '2 egg muffins (bacon/sausage + cheese)';
+const LUNCH = 'Ground beef + shredded cheese, sour cream on the side';
+const SNACKS = 'String cheese, hard-boiled eggs, jerky, macadamias/pecans';
+const MEAL_WEEK = [
+  { day: 'Monday', dinner: 'Chicken thighs + butter' },
+  { day: 'Tuesday', dinner: 'Ground beef taco bowl (sour cream + cheese, no shell)' },
+  { day: 'Wednesday', dinner: 'Chicken thighs + butter' },
+  { day: 'Thursday', dinner: 'Ground beef taco bowl (sour cream + cheese, no shell)' },
+  { day: 'Friday', dinner: 'Chicken thighs + butter' },
+  { day: 'Saturday', dinner: 'Flex meal — eating out or grilling is fine, stick to protein + fat, skip the bun/rice/potato' },
+  { day: 'Sunday', dinner: 'Flex/leftovers — kitchen is about to be freshly stocked', prep: true },
+];
+function renderMealCalendar() {
+  const buildToday = new Date(SUMMARY.generated_at + 'T00:00:00');
+  const dow = buildToday.getDay();
+  const mondayOffset = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(buildToday);
+  monday.setDate(monday.getDate() + mondayOffset);
+  const todayStr = buildToday.toISOString().slice(0, 10);
+  const monthDay = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  const html = MEAL_WEEK.map((d, i) => {
+    const date = new Date(monday);
+    date.setDate(date.getDate() + i);
+    const dateStr = date.toISOString().slice(0, 10);
+    const isToday = dateStr === todayStr;
+    const prepNote = d.prep ? '<span class="daybadge prep">Meal Prep Day</span>' : '';
+    return `<div class="card daycard${isToday ? ' today-card' : ''}">
+      <div class="dayname">${d.day}${isToday ? ' <span class="muted">(today)</span>' : ''}</div>
+      <div class="daydate">${monthDay(date)}</div>
+      ${prepNote}
+      <div class="mealrow"><b>Breakfast</b>${BREAKFAST}</div>
+      <div class="mealrow"><b>Lunch</b>${LUNCH}</div>
+      <div class="mealrow"><b>Dinner</b>${d.dinner}</div>
+      <div class="mealrow"><b>Snacks</b>${SNACKS}</div>
+      ${d.prep ? '<p class="daynote">Batch-cook next week\'s thighs, beef, egg muffins, hard-boiled eggs this afternoon.</p>' : ''}
+    </div>`;
+  }).join('');
+  const container = document.getElementById('mealWeekCalendar');
+  if (container) container.innerHTML = html;
 }
 
 function renderNutritionChart() {
@@ -2578,6 +2654,104 @@ function renderTraining() {
   document.querySelector('#recentWorkoutsTable tbody').innerHTML = recent.map(w =>
     `<tr><td>${w.date}</td><td>${w.type}</td><td>${fmt(w.duration_min,0,' min')}</td><td>${fmt(w.energy_kcal,0,' kcal')}</td><td>${fmt(w.distance_mi,2,' mi')}</td><td>${w.source}</td></tr>`
   ).join('');
+}
+
+// ============ WORKOUT PROGRAM WEEKLY CALENDAR ============
+// Exercise data mirrors the detailed Day A/B/C + Circuit 1/2 tables further down the tab --
+// keep both in sync if the program numbers ever change.
+const DAY_EXERCISES = {
+  A: [
+    { name: 'KB Deadlift', p1: '4x8 @ 55', p2: '4x6 @ 70', p3: '5x5 @ 70' },
+    { name: 'Single-Arm Overhead Press', p1: '3x8/side @ 35', p2: '3x6/side @ 35', p3: '4x5/side @ 35' },
+    { name: 'Box Squat', p1: '3x10 @ 35', p2: '3x8 @ 55', p3: '3x8 @ 55' },
+    { name: 'Farmer/Suitcase Carry', p1: '3x40yd @ 55', p2: '3x40yd @ 70', p3: '4x50yd @ 70' },
+    { name: 'Plank', p1: '3x30s', p2: '3x45s', p3: '3x60s' },
+  ],
+  B: [
+    { name: 'Two-Hand Swing', p1: '5x15 @ 55', p2: '5x15 @ 70', p3: '8x10 @ 70' },
+    { name: 'Single-Arm Row', p1: '3x10/side @ 55', p2: '3x8/side @ 70', p3: '4x8/side @ 70' },
+    { name: 'Single-Leg RDL', p1: '3x8/side @ 35', p2: '3x8/side @ 55', p3: '3x10/side @ 55' },
+    { name: 'Suitcase Carry', p1: '3x40yd/side @ 55', p2: '3x40yd/side @ 70', p3: '4x50yd/side @ 70' },
+    { name: 'Halo (mobility)', p1: '2x10/side @ 35', p2: '2x10/side @ 35', p3: '2x10/side @ 35' },
+  ],
+  C: [
+    { name: 'Single-Arm Clean & Press', p1: '4x6/side @ 35', p2: '4x5/side @ 55', p3: '5x5/side @ 55' },
+    { name: 'Rack Carry', p1: '3x40yd @ 55', p2: '3x40yd @ 70', p3: '4x50yd @ 70' },
+    { name: 'KB Deadlift', p1: '3x10 @ 55', p2: '4x8 @ 70', p3: '4x6 @ 70' },
+    { name: 'Half Get-Up (to elbow)', p1: '3x5/side @ 35', p2: '3x5/side @ 35', p3: '3x5/side @ 55' },
+    { name: 'Swing-Carry-Press complex', p1: '—', p2: '—', p3: '3 rds: 10sw/20yd/5pr' },
+  ],
+  C1: [
+    { name: 'Push-Ups', p1: '3x8–10', p2: '4x10–12', p3: '4x12–15' },
+    { name: 'Wall Sit', p1: '3x20s', p2: '3x30s', p3: '3x45s' },
+    { name: 'Standing Knee Raises', p1: '3x10/side', p2: '3x12/side', p3: '3x15/side' },
+    { name: 'Plank', p1: '3x30s', p2: '3x40s', p3: '3x60s' },
+    { name: 'Glute Bridge', p1: '3x12', p2: '3x15', p3: '3x20' },
+  ],
+  C2: [
+    { name: 'Inverted Row', p1: '3x6–8', p2: '3x8–10', p3: '4x10–12' },
+    { name: 'Step-Ups', p1: '3x8/side', p2: '3x10/side', p3: '3x12/side' },
+    { name: 'Diamond Push-Ups', p1: '3x6–8', p2: '3x8–10', p3: '3x10–12' },
+    { name: 'Slow Mountain Climbers', p1: '3x10/side', p2: '3x12/side', p3: '3x15/side' },
+    { name: 'Calf Raises', p1: '3x15', p2: '3x20', p3: '3x25' },
+  ],
+};
+const WORKOUT_WEEK = [
+  { day: 'Monday', badge: 'kb', type: 'Kettlebell — Day A', key: 'A' },
+  { day: 'Tuesday', badge: 'cal', type: 'Calisthenics — Circuit 1', key: 'C1' },
+  { day: 'Wednesday', badge: 'kb', type: 'Kettlebell — Day B', key: 'B' },
+  { day: 'Thursday', badge: 'cal', type: 'Calisthenics — Circuit 2', key: 'C2' },
+  { day: 'Friday', badge: 'kb', type: 'Kettlebell — Day C', key: 'C' },
+  { day: 'Saturday', badge: 'cardio', type: 'Cardio — Your Choice', key: null, note: 'Pickleball, a walk, or a bike ride — whatever you log counts toward the week.' },
+  { day: 'Sunday', badge: 'rest', type: 'Recovery — Tai Chi Only', key: null, note: 'Full rest from loaded training. 20-min tai chi session is the whole session.' },
+];
+function currentProgramPhase() {
+  const goal = SUMMARY.six_month_goal;
+  if (!goal) return { week: 1, phase: 1, phaseKey: 'p1', label: 'Phase 1 — Technique & Base' };
+  const buildToday = new Date(SUMMARY.generated_at + 'T00:00:00');
+  const startDate = new Date(goal.start_date + 'T00:00:00');
+  const weeksElapsed = Math.max(0, Math.floor((buildToday - startDate) / (7 * 86400000)));
+  const week = weeksElapsed + 1;
+  let phase, phaseKey, label;
+  if (week <= 4) { phase = 1; phaseKey = 'p1'; label = 'Technique & Base'; }
+  else if (week <= 8) { phase = 2; phaseKey = 'p2'; label = 'Strength Build'; }
+  else if (week <= 12) { phase = 3; phaseKey = 'p3'; label = 'Conditioning'; }
+  else { phase = 4; phaseKey = 'p3'; label = 'Sustain & Push Volume (Phase 3 loads + progressive add-ons)'; }
+  return { week, phase, phaseKey, label };
+}
+function renderWorkoutCalendar() {
+  const { week, phase, phaseKey, label } = currentProgramPhase();
+  const phaseLabelEl = document.getElementById('wpPhaseLabel');
+  if (phaseLabelEl) phaseLabelEl.textContent = `Program Week ${week} · Phase ${phase} — ${label}`;
+
+  const buildToday = new Date(SUMMARY.generated_at + 'T00:00:00');
+  const dow = buildToday.getDay(); // 0=Sun..6=Sat
+  const mondayOffset = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(buildToday);
+  monday.setDate(monday.getDate() + mondayOffset);
+  const todayStr = buildToday.toISOString().slice(0, 10);
+  const monthDay = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  const html = WORKOUT_WEEK.map((d, i) => {
+    const date = new Date(monday);
+    date.setDate(date.getDate() + i);
+    const dateStr = date.toISOString().slice(0, 10);
+    const isToday = dateStr === todayStr;
+    const exercises = d.key ? DAY_EXERCISES[d.key] : null;
+    const list = exercises
+      ? `<ul>${exercises.map(e => `<li>${e.name}: ${e[phaseKey]}</li>`).join('')}</ul>`
+      : `<p class="daynote">${d.note}</p>`;
+    const taichi = d.day === 'Sunday' ? '' : '<p class="daynote">+ 10-min tai chi warm-up</p>';
+    return `<div class="card daycard${isToday ? ' today-card' : ''}">
+      <div class="dayname">${d.day}${isToday ? ' <span class="muted">(today)</span>' : ''}</div>
+      <div class="daydate">${monthDay(date)}</div>
+      <span class="daybadge ${d.badge}">${d.badge === 'kb' ? 'Kettlebell' : d.badge === 'cal' ? 'Calisthenics' : d.badge === 'cardio' ? 'Cardio' : 'Recovery'}</span>
+      <div style="font-size:12px; font-weight:600;">${d.type}</div>
+      ${list}${taichi}
+    </div>`;
+  }).join('');
+  const container = document.getElementById('workoutWeekCalendar');
+  if (container) container.innerHTML = html;
 }
 
 // ============ VITALS & GLUCOSE ============
@@ -2728,7 +2902,9 @@ function safeRun(name, fn) {
 safeRun('renderOverview', renderOverview);
 safeRun('renderGoal', renderGoal);
 safeRun('renderNutritionTargets', renderNutritionTargets);
+safeRun('renderMealCalendar', renderMealCalendar);
 safeRun('renderTraining', renderTraining);
+safeRun('renderWorkoutCalendar', renderWorkoutCalendar);
 safeRun('renderVitals', renderVitals);
 safeRun('renderHistoryPicker', renderHistoryPicker);
 safeRun('renderHistoryChart', renderHistoryChart);
