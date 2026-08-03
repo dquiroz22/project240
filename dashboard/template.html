@@ -145,7 +145,11 @@
     <h1>Project 240 — Health &amp; Wellness System</h1>
     <div class="sub">v1 · Generated <span id="genDate"></span> · Data through <span id="dataThrough"></span></div>
   </div>
-  <div class="sub" id="headerScore"></div>
+  <div style="text-align:right;">
+    <div class="sub" id="headerScore"></div>
+    <button class="btn secondary" id="checkinRefreshBtn" style="padding:6px 12px; font-size:12px; margin-top:6px;">Update from Sheet</button>
+    <div class="footnote" id="checkinRefreshStatus" style="margin-top:4px;"></div>
+  </div>
 </header>
 
 <nav class="tabs">
@@ -1345,6 +1349,79 @@ function truthyCheck(v) {
 function checkinForDate(dateStr) {
   return getCheckins().find(r => r.date === dateStr) || null;
 }
+
+// ============ LIVE CHECK-IN REFRESH (published-to-web Sheet CSV, no rebuild needed) ============
+const PUBLISHED_CHECKINS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ86Wp5pFUM6TeB8-JxxFxTizvccfPM4G2Vlpmimpa9JBolwo5bfJkx_K9SyKhxPwJ1jlBR084qnmkr/pub?output=csv';
+
+function jsNormalizeDate(raw) {
+  raw = (raw || '').trim();
+  if (!raw) return raw;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+  if (m) {
+    let [, mo, da, yr] = m;
+    if (yr.length === 2) yr = (Number(yr) <= 68 ? '20' : '19') + yr; // matches Python strptime %y behavior
+    return `${yr}-${mo.padStart(2, '0')}-${da.padStart(2, '0')}`;
+  }
+  return raw; // unrecognized format -- leave as-is rather than silently dropping it
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], next = text[i + 1];
+    if (inQuotes) {
+      if (c === '"' && next === '"') { field += '"'; i++; }
+      else if (c === '"') { inQuotes = false; }
+      else { field += c; }
+    } else {
+      if (c === '"') { inQuotes = true; }
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\r') { /* skip -- handled with \n below */ }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else { field += c; }
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1)
+    .filter(r => r.some(v => v !== ''))
+    .map(r => {
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = (r[idx] !== undefined ? r[idx] : '').trim(); });
+      return obj;
+    });
+}
+
+async function refreshCheckins() {
+  const btn = document.getElementById('checkinRefreshBtn');
+  const status = document.getElementById('checkinRefreshStatus');
+  if (btn) { btn.disabled = true; btn.textContent = 'Updating…'; }
+  if (status) status.textContent = '';
+  try {
+    const bust = PUBLISHED_CHECKINS_CSV_URL + (PUBLISHED_CHECKINS_CSV_URL.includes('?') ? '&' : '?') + '_ts=' + Date.now();
+    const res = await fetch(bust, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    rows.forEach(r => { if ('date' in r) r.date = jsNormalizeDate(r.date); });
+    CHECKINS.length = 0;
+    rows.forEach(r => CHECKINS.push(r)); // mutate in place -- CHECKINS is declared const
+    safeRun('renderOverview', renderOverview);
+    safeRun('renderWorkoutCalendar', renderWorkoutCalendar);
+    safeRun('renderMealCalendar', renderMealCalendar);
+    safeRun('renderLog', renderLog);
+    safeRun('renderNutritionChart', renderNutritionChart);
+    if (status) status.textContent = `Updated ${new Date().toLocaleTimeString()} (${rows.length} check-in${rows.length === 1 ? '' : 's'})`;
+  } catch (err) {
+    console.error('refreshCheckins failed:', err);
+    if (status) status.innerHTML = '<span style="color:var(--bad)">Update failed -- check your connection, or that the Sheet is still published to web.</span>';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Update from Sheet'; }
+  }
+}
 function exportCheckins() {
   const arr = getCheckins().slice().sort((a,b)=>a.date.localeCompare(b.date));
   const headers = ['date','weight','waist','bp','calories','protein','water','alcohol','strength','meal_followed','workout_completed','notes'];
@@ -1392,6 +1469,8 @@ safeRun('wireWeekToggles', function wireWeekToggles() {
     mealWeekOffset = mealWeekOffset === 0 ? 1 : 0;
     renderMealCalendar();
   });
+  const refreshBtn = document.getElementById('checkinRefreshBtn');
+  if (refreshBtn) refreshBtn.addEventListener('click', refreshCheckins);
 });
 safeRun('renderVitals', renderVitals);
 safeRun('renderHistoryPicker', renderHistoryPicker);
