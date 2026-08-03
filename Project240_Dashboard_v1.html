@@ -2996,12 +2996,50 @@ function checkinForDate(dateStr) {
   return getCheckins().find(r => r.date === dateStr) || null;
 }
 
-// ============ LIVE CHECK-IN REFRESH (published-to-web Sheet CSV, no rebuild needed) ============
-const PUBLISHED_CHECKINS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ86Wp5pFUM6TeB8-JxxFxTizvccfPM4G2Vlpmimpa9JBolwo5bfJkx_K9SyKhxPwJ1jlBR084qnmkr/pub?output=csv';
+// ============ LIVE CHECK-IN REFRESH (Apps Script Web App, JSONP -- no rebuild needed) ============
+// This dashboard is opened as a local file:// page, which sends Origin: null on any fetch().
+// Google's servers (both the "publish to web" CSV link AND a plain Apps Script fetch) refuse to
+// grant CORS access to a null origin -- that's deliberate on Google's end and not fixable via
+// deployment settings, retrying, or a different browser (confirmed in Chrome DevTools twice).
+// Fix: load the data via a dynamic <script> tag instead of fetch(). Script tags are never subject
+// to CORS/origin checks (this is the classic pre-CORS "JSONP" technique) -- the Apps Script
+// doGet() wraps its JSON in a callback(...) call when a ?callback= param is present. See
+// Extensions -> Apps Script in the Check-Ins Sheet for the doGet() source if this ever needs
+// to be redeployed.
+const CHECKINS_API_URL = 'https://script.google.com/macros/s/AKfycbxI1Udn9RdAzPmdIq0sz5Dw6hYd_LYpmCXuz5eeTpdo-XJAEZp4tIWhmxyXBY2aTtfHjg/exec';
+
+function jsonpRequest(url, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const cbName = '__checkinsCb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+    let done = false;
+    const script = document.createElement('script');
+    const timer = setTimeout(() => finish(() => reject(new Error('Request timed out'))), timeoutMs || 15000);
+    function cleanup() {
+      delete window[cbName];
+      script.remove();
+      clearTimeout(timer);
+    }
+    function finish(fn) {
+      if (done) return;
+      done = true;
+      cleanup();
+      fn();
+    }
+    window[cbName] = (data) => finish(() => resolve(data));
+    script.onerror = () => finish(() => reject(new Error('Script load failed')));
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
+    document.body.appendChild(script);
+  });
+}
 
 function jsNormalizeDate(raw) {
   raw = (raw || '').trim();
   if (!raw) return raw;
+  // Apps Script serializes Sheet date cells as full ISO datetimes (e.g. "2026-08-02T07:00:00.000Z")
+  // rather than a plain date -- the date portion before "T" is still the correct local calendar
+  // date (the Sheet's document timezone anchors it to local midnight), so just take that part.
+  const iso = raw.match(/^(\d{4}-\d{2}-\d{2})T/);
+  if (iso) return iso[1];
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
   const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
   if (m) {
@@ -3012,47 +3050,15 @@ function jsNormalizeDate(raw) {
   return raw; // unrecognized format -- leave as-is rather than silently dropping it
 }
 
-function parseCSV(text) {
-  const rows = [];
-  let row = [], field = '', inQuotes = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i], next = text[i + 1];
-    if (inQuotes) {
-      if (c === '"' && next === '"') { field += '"'; i++; }
-      else if (c === '"') { inQuotes = false; }
-      else { field += c; }
-    } else {
-      if (c === '"') { inQuotes = true; }
-      else if (c === ',') { row.push(field); field = ''; }
-      else if (c === '\r') { /* skip -- handled with \n below */ }
-      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
-      else { field += c; }
-    }
-  }
-  if (field.length || row.length) { row.push(field); rows.push(row); }
-  if (!rows.length) return [];
-  const headers = rows[0].map(h => h.trim());
-  return rows.slice(1)
-    .filter(r => r.some(v => v !== ''))
-    .map(r => {
-      const obj = {};
-      headers.forEach((h, idx) => { obj[h] = (r[idx] !== undefined ? r[idx] : '').trim(); });
-      return obj;
-    });
-}
-
 async function refreshCheckins() {
   const btn = document.getElementById('checkinRefreshBtn');
   const status = document.getElementById('checkinRefreshStatus');
   if (btn) { btn.disabled = true; btn.textContent = 'Updating…'; }
   if (status) status.textContent = '';
   try {
-    const bust = PUBLISHED_CHECKINS_CSV_URL + (PUBLISHED_CHECKINS_CSV_URL.includes('?') ? '&' : '?') + '_ts=' + Date.now();
-    const res = await fetch(bust, { cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-    const rows = parseCSV(text);
-    rows.forEach(r => { if ('date' in r) r.date = jsNormalizeDate(r.date); });
+    const bust = CHECKINS_API_URL + (CHECKINS_API_URL.includes('?') ? '&' : '?') + '_ts=' + Date.now();
+    const rows = await jsonpRequest(bust);
+    rows.forEach(r => { if ('date' in r) r.date = jsNormalizeDate(String(r.date)); });
     CHECKINS.length = 0;
     rows.forEach(r => CHECKINS.push(r)); // mutate in place -- CHECKINS is declared const
     safeRun('renderOverview', renderOverview);
@@ -3063,7 +3069,7 @@ async function refreshCheckins() {
     if (status) status.textContent = `Updated ${new Date().toLocaleTimeString()} (${rows.length} check-in${rows.length === 1 ? '' : 's'})`;
   } catch (err) {
     console.error('refreshCheckins failed:', err);
-    if (status) status.innerHTML = '<span style="color:var(--bad)">Update failed -- check your connection, or that the Sheet is still published to web.</span>';
+    if (status) status.innerHTML = '<span style="color:var(--bad)">Update failed -- check your connection, or that the Apps Script deployment is still active.</span>';
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Update from Sheet'; }
   }
